@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
@@ -27,6 +28,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDrawerState
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +43,7 @@ import com.app.viam.R
 import com.app.viam.data.model.User
 import kotlinx.coroutines.launch
 
-enum class DrawerScreen { HOME, PROFILE, DEVELOPER }
+enum class DrawerScreen { HOME, PROFILE, PERSONNEL, DEVELOPER }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +53,7 @@ fun MainScaffold(
     currentScreen: DrawerScreen,
     onNavigate: (DrawerScreen) -> Unit,
     onLogout: () -> Unit,
+    showPersonnel: Boolean = false,
     content: @Composable (Modifier) -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -74,6 +77,11 @@ fun MainScaffold(
                 }
             }
         )
+    }
+
+    // Close drawer on back press when it is open
+    BackHandler(enabled = drawerState.isOpen) {
+        scope.launch { drawerState.close() }
     }
 
     ModalNavigationDrawer(
@@ -118,6 +126,20 @@ fun MainScaffold(
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
+
+                // Personnel item — only if user has view-personnel permission
+                if (showPersonnel) {
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Filled.People, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_personnel)) },
+                        selected = currentScreen == DrawerScreen.PERSONNEL,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            onNavigate(DrawerScreen.PERSONNEL)
+                        },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+                }
 
                 // Developer item — only in debug builds
                 if (BuildConfig.DEBUG) {

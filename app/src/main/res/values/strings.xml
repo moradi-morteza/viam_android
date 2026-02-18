@@ -13,10 +13,13 @@
     <string name="logout_confirm_message">آیا مطمئن هستید که می‌خواهید خارج شوید؟</string>
     <string name="confirm">تایید</string>
     <string name="cancel">انصراف</string>
+    <string name="save">ذخیره</string>
+    <string name="back">بازگشت</string>
 
     <!-- Navigation Drawer -->
     <string name="nav_home">خانه</string>
     <string name="nav_profile">پروفایل</string>
+    <string name="nav_personnel">پرسنل</string>
     <string name="nav_developer">حالت توسعه‌دهنده</string>
     <string name="nav_logout">خروج از سیستم</string>
 
@@ -47,4 +50,14 @@
     <string name="developer_copy">کپی</string>
     <string name="developer_copied">کپی شد</string>
     <string name="developer_no_data">داده‌ای یافت نشد</string>
+
+    <!-- Personnel Screen -->
+    <string name="personnel_title">پرسنل</string>
+    <string name="personnel_create">افزودن کاربر</string>
+    <string name="personnel_edit">ویرایش کاربر</string>
+    <string name="personnel_delete">حذف کاربر</string>
+    <string name="personnel_delete_title">حذف کاربر</string>
+    <string name="personnel_delete_message">آیا مطمئن هستید که می‌خواهید این کاربر را حذف کنید؟</string>
+    <string name="personnel_empty">هیچ کاربری یافت نشد</string>
+    <string name="personnel_password_optional">رمز عبور (اختیاری)</string>
 </resources>

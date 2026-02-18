@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,11 +25,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.viam.BuildConfig
 import com.app.viam.R
 import com.app.viam.data.local.UserPreferences
+import com.app.viam.data.model.User
+import com.app.viam.data.repository.PersonnelRepository
 import com.app.viam.ui.common.DrawerScreen
 import com.app.viam.ui.common.MainScaffold
 import com.app.viam.ui.developer.DeveloperScreen
 import com.app.viam.ui.developer.DeveloperViewModel
+import com.app.viam.ui.personnel.PersonnelListScreen
+import com.app.viam.ui.personnel.PersonnelListViewModel
+import com.app.viam.ui.personnel.StaffFormScreen
+import com.app.viam.ui.personnel.StaffFormViewModel
 import com.app.viam.ui.profile.ProfileScreen
+
+// Sub-screen within the Personnel section
+private enum class PersonnelSubScreenType { LIST, CREATE, EDIT }
 
 @Composable
 fun HomeScreen(
@@ -38,6 +48,27 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var currentScreen by rememberSaveable { mutableStateOf(DrawerScreen.HOME) }
+    var personnelSubScreenType by rememberSaveable { mutableStateOf(PersonnelSubScreenType.LIST) }
+    var staffToEdit by remember { mutableStateOf<User?>(null) }
+
+    // Back press handling:
+    // - In sub-form (create/edit): go back to personnel list
+    // - On any non-HOME screen: go back to HOME
+    // - On HOME: do nothing (system default = close app)
+    BackHandler(
+        enabled = personnelSubScreenType != PersonnelSubScreenType.LIST ||
+                currentScreen != DrawerScreen.HOME
+    ) {
+        when {
+            personnelSubScreenType != PersonnelSubScreenType.LIST -> {
+                personnelSubScreenType = PersonnelSubScreenType.LIST
+                staffToEdit = null
+            }
+            currentScreen != DrawerScreen.HOME -> {
+                currentScreen = DrawerScreen.HOME
+            }
+        }
+    }
 
     LaunchedEffect(uiState.isLoggedOut) {
         if (uiState.isLoggedOut) {
@@ -46,10 +77,53 @@ fun HomeScreen(
         }
     }
 
-    val screenTitle = when (currentScreen) {
-        DrawerScreen.HOME -> stringResource(R.string.home_welcome)
-        DrawerScreen.PROFILE -> stringResource(R.string.profile_title)
-        DrawerScreen.DEVELOPER -> stringResource(R.string.developer_title)
+    // When switching away from personnel, reset sub-screen
+    LaunchedEffect(currentScreen) {
+        if (currentScreen != DrawerScreen.PERSONNEL) {
+            personnelSubScreenType = PersonnelSubScreenType.LIST
+            staffToEdit = null
+        }
+    }
+
+    val currentUser = uiState.user
+    val canViewPersonnel = currentUser?.isAdmin() == true ||
+            currentUser?.hasPermission("view-personnel") == true
+
+    val screenTitle = when {
+        currentScreen == DrawerScreen.HOME -> stringResource(R.string.home_welcome)
+        currentScreen == DrawerScreen.PROFILE -> stringResource(R.string.profile_title)
+        currentScreen == DrawerScreen.DEVELOPER -> stringResource(R.string.developer_title)
+        currentScreen == DrawerScreen.PERSONNEL && personnelSubScreenType == PersonnelSubScreenType.CREATE ->
+            stringResource(R.string.personnel_create)
+        currentScreen == DrawerScreen.PERSONNEL && personnelSubScreenType == PersonnelSubScreenType.EDIT ->
+            stringResource(R.string.personnel_edit)
+        else -> stringResource(R.string.personnel_title)
+    }
+
+    // Personnel sub-screens (create/edit) have their own TopAppBar with back button,
+    // so we don't wrap them in MainScaffold
+    val isInSubForm = currentScreen == DrawerScreen.PERSONNEL &&
+            personnelSubScreenType != PersonnelSubScreenType.LIST
+
+    if (isInSubForm) {
+        val personnelRepository = PersonnelRepository()
+        val editStaff = if (personnelSubScreenType == PersonnelSubScreenType.EDIT) staffToEdit else null
+        val formVm: StaffFormViewModel = viewModel(
+            key = if (editStaff != null) "edit_${editStaff.id}" else "create",
+            factory = StaffFormViewModel.Factory(personnelRepository, editStaff)
+        )
+        StaffFormScreen(
+            viewModel = formVm,
+            onSaveSuccess = {
+                personnelSubScreenType = PersonnelSubScreenType.LIST
+                staffToEdit = null
+            },
+            onBack = {
+                personnelSubScreenType = PersonnelSubScreenType.LIST
+                staffToEdit = null
+            }
+        )
+        return
     }
 
     MainScaffold(
@@ -57,7 +131,8 @@ fun HomeScreen(
         user = uiState.user,
         currentScreen = currentScreen,
         onNavigate = { currentScreen = it },
-        onLogout = { viewModel.onLogoutConfirmed() }
+        onLogout = { viewModel.onLogoutConfirmed() },
+        showPersonnel = canViewPersonnel
     ) { contentModifier ->
         when (currentScreen) {
             DrawerScreen.HOME -> HomeDashboard(
@@ -67,6 +142,23 @@ fun HomeScreen(
             DrawerScreen.PROFILE -> {
                 uiState.user?.let { user ->
                     ProfileScreen(user = user, modifier = contentModifier)
+                }
+            }
+            DrawerScreen.PERSONNEL -> {
+                if (canViewPersonnel && currentUser != null) {
+                    val personnelRepository = PersonnelRepository()
+                    val listVm: PersonnelListViewModel = viewModel(
+                        factory = PersonnelListViewModel.Factory(personnelRepository, currentUser)
+                    )
+                    PersonnelListScreen(
+                        viewModel = listVm,
+                        onNavigateToCreate = { personnelSubScreenType = PersonnelSubScreenType.CREATE },
+                        onNavigateToEdit = { staff ->
+                            staffToEdit = staff
+                            personnelSubScreenType = PersonnelSubScreenType.EDIT
+                        },
+                        modifier = contentModifier
+                    )
                 }
             }
             DrawerScreen.DEVELOPER -> {
