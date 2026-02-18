@@ -1,3 +1,16 @@
 <resources>
-    <string name="app_name">viam</string>
+    <string name="app_name">ویام</string>
+    <string name="login_title">ورود به سیستم</string>
+    <string name="login_subtitle">انبارداری ویام</string>
+    <string name="username_label">نام کاربری</string>
+    <string name="password_label">رمز عبور</string>
+    <string name="login_button">ورود</string>
+    <string name="show_password">نمایش رمز</string>
+    <string name="hide_password">پنهان کردن رمز</string>
+    <string name="home_welcome">خوش آمدید</string>
+    <string name="logout_button">خروج از سیستم</string>
+    <string name="logout_confirm_title">خروج از سیستم</string>
+    <string name="logout_confirm_message">آیا مطمئن هستید که می‌خواهید خارج شوید؟</string>
+    <string name="confirm">تایید</string>
+    <string name="cancel">انصراف</string>
 </resources>
