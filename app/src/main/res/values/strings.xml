@@ -13,4 +13,38 @@
     <string name="logout_confirm_message">آیا مطمئن هستید که می‌خواهید خارج شوید؟</string>
     <string name="confirm">تایید</string>
     <string name="cancel">انصراف</string>
+
+    <!-- Navigation Drawer -->
+    <string name="nav_home">خانه</string>
+    <string name="nav_profile">پروفایل</string>
+    <string name="nav_developer">حالت توسعه‌دهنده</string>
+    <string name="nav_logout">خروج از سیستم</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">پروفایل</string>
+    <string name="profile_name">نام</string>
+    <string name="profile_username">نام کاربری</string>
+    <string name="profile_email">ایمیل</string>
+    <string name="profile_mobile">موبایل</string>
+    <string name="profile_address">آدرس</string>
+    <string name="profile_role">نقش</string>
+    <string name="profile_role_admin">مدیر</string>
+    <string name="profile_role_staff">کارمند</string>
+    <string name="profile_permissions">دسترسی‌ها</string>
+    <string name="profile_no_permissions">دسترسی خاصی تعریف نشده</string>
+    <string name="profile_not_set">تعریف نشده</string>
+
+    <!-- Permission categories -->
+    <string name="perm_category_warehouse">انبار</string>
+    <string name="perm_category_personnel">پرسنل</string>
+    <string name="perm_category_roles">نقش‌ها</string>
+    <string name="perm_category_dashboard">داشبورد</string>
+    <string name="perm_category_other">سایر</string>
+
+    <!-- Developer Screen -->
+    <string name="developer_title">حالت توسعه‌دهنده</string>
+    <string name="developer_datastore">داده‌های ذخیره‌شده (DataStore)</string>
+    <string name="developer_copy">کپی</string>
+    <string name="developer_copied">کپی شد</string>
+    <string name="developer_no_data">داده‌ای یافت نشد</string>
 </resources>

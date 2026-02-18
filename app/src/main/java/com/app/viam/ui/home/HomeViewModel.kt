@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val user: User? = null,
     val isLoggingOut: Boolean = false,
-    val showLogoutConfirm: Boolean = false,
     val isLoggedOut: Boolean = false
 )
 
@@ -31,13 +30,11 @@ class HomeViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun onLogoutClicked() = _uiState.update { it.copy(showLogoutConfirm = true) }
-    fun onLogoutDismissed() = _uiState.update { it.copy(showLogoutConfirm = false) }
     fun onLogoutNavigated() = _uiState.update { it.copy(isLoggedOut = false) }
 
     fun onLogoutConfirmed() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoggingOut = true, showLogoutConfirm = false) }
+            _uiState.update { it.copy(isLoggingOut = true) }
             authRepository.logout()
             _uiState.update { it.copy(isLoggingOut = false, isLoggedOut = true) }
         }

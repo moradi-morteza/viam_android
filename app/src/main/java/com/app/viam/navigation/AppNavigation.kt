@@ -47,7 +47,7 @@ fun AppNavigation(
         }
         .collectAsStateWithLifecycle(initialValue = AuthState.Loading)
 
-    // Observe session expiry (401 responses) and force logout
+    // Observe 401 session expiry and force logout
     val sessionExpired by SessionManager.sessionExpired
         .collectAsStateWithLifecycle(initialValue = Unit.let { null })
 
@@ -105,6 +105,7 @@ fun AppNavigation(
             )
             HomeScreen(
                 viewModel = homeViewModel,
+                userPreferences = userPreferences,
                 onLogout = {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.HOME) { inclusive = true }
