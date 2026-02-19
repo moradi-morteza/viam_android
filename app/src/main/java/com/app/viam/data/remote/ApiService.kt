@@ -3,6 +3,8 @@ package com.app.viam.data.remote
 import com.app.viam.data.model.CreateStaffRequest
 import com.app.viam.data.model.LoginRequest
 import com.app.viam.data.model.LoginResponse
+import com.app.viam.data.model.Part
+import com.app.viam.data.model.PartRequest
 import com.app.viam.data.model.UpdateStaffRequest
 import com.app.viam.data.model.User
 import retrofit2.Response
@@ -12,6 +14,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
 
@@ -45,4 +48,21 @@ interface ApiService {
 
     @DELETE("staffs/{id}")
     suspend fun deleteStaff(@Path("id") id: Int): Response<Map<String, String>>
+
+    // --- Parts ---
+
+    @GET("parts")
+    suspend fun getParts(@Query("search") search: String? = null): Response<List<Part>>
+
+    @GET("parts/{id}")
+    suspend fun getPart(@Path("id") id: Int): Response<Part>
+
+    @POST("parts")
+    suspend fun createPart(@Body request: PartRequest): Response<Part>
+
+    @PUT("parts/{id}")
+    suspend fun updatePart(@Path("id") id: Int, @Body request: PartRequest): Response<Part>
+
+    @DELETE("parts/{id}")
+    suspend fun deletePart(@Path("id") id: Int): Response<Map<String, String>>
 }

@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PowerSettingsNew
@@ -43,7 +45,10 @@ import com.app.viam.R
 import com.app.viam.data.model.User
 import kotlinx.coroutines.launch
 
-enum class DrawerScreen { HOME, PROFILE, PERSONNEL, DEVELOPER }
+enum class DrawerScreen { HOME, PROFILE, PERSONNEL, PARTS, DEVELOPER }
+
+// Shape for drawer items — slightly rounded rectangle
+private val DrawerItemShape = RoundedCornerShape(6.dp)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +59,7 @@ fun MainScaffold(
     onNavigate: (DrawerScreen) -> Unit,
     onLogout: () -> Unit,
     showPersonnel: Boolean = false,
+    showParts: Boolean = false,
     content: @Composable (Modifier) -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -79,7 +85,6 @@ fun MainScaffold(
         )
     }
 
-    // Close drawer on back press when it is open
     BackHandler(enabled = drawerState.isOpen) {
         scope.launch { drawerState.close() }
     }
@@ -88,8 +93,8 @@ fun MainScaffold(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
-                // Header
-                Column(modifier = Modifier.padding(16.dp)) {
+                // Header — top padding
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp)) {
                     Text(
                         text = user?.name ?: "",
                         style = MaterialTheme.typography.titleMedium
@@ -113,7 +118,8 @@ fun MainScaffold(
                         scope.launch { drawerState.close() }
                         onNavigate(DrawerScreen.HOME)
                     },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    shape = DrawerItemShape,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                 )
 
                 NavigationDrawerItem(
@@ -124,10 +130,10 @@ fun MainScaffold(
                         scope.launch { drawerState.close() }
                         onNavigate(DrawerScreen.PROFILE)
                     },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    shape = DrawerItemShape,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                 )
 
-                // Personnel item — only if user has view-personnel permission
                 if (showPersonnel) {
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Filled.People, contentDescription = null) },
@@ -137,11 +143,25 @@ fun MainScaffold(
                             scope.launch { drawerState.close() }
                             onNavigate(DrawerScreen.PERSONNEL)
                         },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        shape = DrawerItemShape,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                     )
                 }
 
-                // Developer item — only in debug builds
+                if (showParts) {
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Filled.Inventory2, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_parts)) },
+                        selected = currentScreen == DrawerScreen.PARTS,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            onNavigate(DrawerScreen.PARTS)
+                        },
+                        shape = DrawerItemShape,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                    )
+                }
+
                 if (BuildConfig.DEBUG) {
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Filled.Code, contentDescription = null) },
@@ -151,7 +171,8 @@ fun MainScaffold(
                             scope.launch { drawerState.close() }
                             onNavigate(DrawerScreen.DEVELOPER)
                         },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        shape = DrawerItemShape,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                     )
                 }
 
@@ -178,9 +199,10 @@ fun MainScaffold(
                         scope.launch { drawerState.close() }
                         showLogoutConfirm = true
                     },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    shape = DrawerItemShape,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     ) {

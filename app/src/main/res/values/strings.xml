@@ -20,6 +20,7 @@
     <string name="nav_home">خانه</string>
     <string name="nav_profile">پروفایل</string>
     <string name="nav_personnel">پرسنل</string>
+    <string name="nav_parts">قطعات</string>
     <string name="nav_developer">حالت توسعه‌دهنده</string>
     <string name="nav_logout">خروج از سیستم</string>
 
@@ -60,4 +61,19 @@
     <string name="personnel_delete_message">آیا مطمئن هستید که می‌خواهید این کاربر را حذف کنید؟</string>
     <string name="personnel_empty">هیچ کاربری یافت نشد</string>
     <string name="personnel_password_optional">رمز عبور (اختیاری)</string>
+
+    <!-- Parts Screen -->
+    <string name="parts_title">قطعات</string>
+    <string name="parts_search_hint">جستجوی قطعه…</string>
+    <string name="parts_empty">قطعه‌ای یافت نشد</string>
+    <string name="parts_create">افزودن قطعه</string>
+    <string name="parts_edit">ویرایش قطعه</string>
+    <string name="parts_delete">حذف قطعه</string>
+    <string name="parts_delete_title">حذف قطعه</string>
+    <string name="parts_delete_message">آیا مطمئن هستید که می‌خواهید این قطعه را حذف کنید؟</string>
+    <string name="parts_sku">کد قطعه (SKU)</string>
+    <string name="parts_name">نام قطعه</string>
+    <string name="parts_unit">واحد</string>
+    <string name="parts_description">توضیحات</string>
+    <string name="parts_total_stock">موجودی کل</string>
 </resources>

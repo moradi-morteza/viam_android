@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/theme/Theme.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/common/MainScaffold.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/personnel/PersonnelListScreen.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/res/values/strings.xml\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/data/model/Part.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/data/repository/PartRepository.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/parts/PartListViewModel.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/parts/PartFormViewModel.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/parts/PartListScreen.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/parts/PartFormScreen.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/common/FormFields.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/personnel/StaffFormScreen.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/home/HomeScreen.kt\":*)",
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/auth/LoginScreen.kt\":*)"
+    ]
+  }
+}

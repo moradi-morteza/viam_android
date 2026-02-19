@@ -1,4 +1,4 @@
-package com.app.viam.ui.personnel
+package com.app.viam.ui.parts
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,22 +14,28 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -47,17 +53,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.viam.R
-import com.app.viam.data.model.User
+import com.app.viam.data.model.Part
 
 @Composable
-fun PersonnelListScreen(
-    viewModel: PersonnelListViewModel,
+fun PartListScreen(
+    viewModel: PartListViewModel,
     onNavigateToCreate: () -> Unit,
-    onNavigateToEdit: (User) -> Unit,
+    onNavigateToEdit: (Part) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(uiState.navigateToCreate) {
         if (uiState.navigateToCreate) {
@@ -67,9 +74,9 @@ fun PersonnelListScreen(
     }
 
     LaunchedEffect(uiState.navigateToEdit) {
-        uiState.navigateToEdit?.let { staff ->
+        uiState.navigateToEdit?.let { part ->
             viewModel.onEditNavigated()
-            onNavigateToEdit(staff)
+            onNavigateToEdit(part)
         }
     }
 
@@ -83,8 +90,8 @@ fun PersonnelListScreen(
     if (uiState.deleteConfirmId != null) {
         AlertDialog(
             onDismissRequest = viewModel::onDeleteDismissed,
-            title = { Text(stringResource(R.string.personnel_delete_title)) },
-            text = { Text(stringResource(R.string.personnel_delete_message)) },
+            title = { Text(stringResource(R.string.parts_delete_title)) },
+            text = { Text(stringResource(R.string.parts_delete_message)) },
             confirmButton = {
                 TextButton(onClick = viewModel::onDeleteConfirmed) {
                     Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error)
@@ -104,56 +111,80 @@ fun PersonnelListScreen(
         floatingActionButton = {
             if (viewModel.canCreate) {
                 FloatingActionButton(onClick = viewModel::onCreateClicked) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.personnel_create))
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.parts_create))
                 }
             }
         }
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                uiState.staffList.isEmpty() -> {
-                    Text(
-                        text = stringResource(R.string.personnel_empty),
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(uiState.staffList, key = { it.id }) { staff ->
-                            StaffCard(
-                                staff = staff,
-                                canEdit = viewModel.canEdit,
-                                canDelete = viewModel.canDelete,
-                                onEdit = { viewModel.onEditClicked(staff) },
-                                onDelete = { viewModel.onDeleteClicked(staff.id) }
-                            )
+            // Search bar
+            OutlinedTextField(
+                value = uiState.searchQuery,
+                onValueChange = viewModel::onSearchChange,
+                placeholder = { Text(stringResource(R.string.parts_search_hint)) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (uiState.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onSearchChange("") }) {
+                            Icon(Icons.Filled.Close, contentDescription = null)
+                        }
+                    }
+                },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    uiState.isLoading -> {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+                    uiState.parts.isEmpty() -> {
+                        Text(
+                            text = stringResource(R.string.parts_empty),
+                            modifier = Modifier.align(Alignment.Center),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    else -> {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                start = 16.dp, end = 16.dp, bottom = 80.dp
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(uiState.parts, key = { it.id }) { part ->
+                                PartCard(
+                                    part = part,
+                                    canEdit = viewModel.canEdit,
+                                    canDelete = viewModel.canDelete,
+                                    onEdit = { viewModel.onEditClicked(part) },
+                                    onDelete = { viewModel.onDeleteClicked(part.id) }
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            if (uiState.isDeleting) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                if (uiState.isDeleting) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun StaffCard(
-    staff: User,
+private fun PartCard(
+    part: Part,
     canEdit: Boolean,
     canDelete: Boolean,
     onEdit: () -> Unit,
@@ -170,48 +201,52 @@ private fun StaffCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { /* ripple effect on card tap */ }
+                .clickable { }
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Filled.Person,
+                imageVector = Icons.Filled.Inventory2,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(36.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = staff.name,
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = staff.username,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (!staff.mobile.isNullOrBlank()) {
+                Text(text = part.name, style = MaterialTheme.typography.titleSmall)
+                if (!part.sku.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = staff.mobile,
+                        text = part.sku,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (!part.unit.isNullOrBlank()) {
+                    Text(
+                        text = part.unit,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            // Role badge
-            Text(
-                text = if (staff.isAdmin()) stringResource(R.string.profile_role_admin)
-                       else stringResource(R.string.profile_role_staff),
-                style = MaterialTheme.typography.labelSmall,
-                color = if (staff.isAdmin()) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
+            // Stock badge
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = part.totalStock.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (part.totalStock > 0) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.error
+                )
+                Text(
+                    text = stringResource(R.string.parts_total_stock),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
-            // 3-dot menu
             if (showMenu) {
+                Spacer(modifier = Modifier.width(4.dp))
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
@@ -226,40 +261,26 @@ private fun StaffCard(
                     ) {
                         if (canEdit) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.personnel_edit)) },
+                                text = { Text(stringResource(R.string.parts_edit)) },
                                 leadingIcon = {
-                                    Icon(
-                                        Icons.Filled.Edit,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                    Icon(Icons.Filled.Edit, contentDescription = null,
+                                        modifier = Modifier.size(18.dp))
                                 },
-                                onClick = {
-                                    menuExpanded = false
-                                    onEdit()
-                                }
+                                onClick = { menuExpanded = false; onEdit() }
                             )
                         }
                         if (canDelete) {
                             DropdownMenuItem(
                                 text = {
-                                    Text(
-                                        stringResource(R.string.personnel_delete),
-                                        color = MaterialTheme.colorScheme.error
-                                    )
+                                    Text(stringResource(R.string.parts_delete),
+                                        color = MaterialTheme.colorScheme.error)
                                 },
                                 leadingIcon = {
-                                    Icon(
-                                        Icons.Filled.Delete,
-                                        contentDescription = null,
+                                    Icon(Icons.Filled.Delete, contentDescription = null,
                                         tint = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                        modifier = Modifier.size(18.dp))
                                 },
-                                onClick = {
-                                    menuExpanded = false
-                                    onDelete()
-                                }
+                                onClick = { menuExpanded = false; onDelete() }
                             )
                         }
                     }
