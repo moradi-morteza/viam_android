@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">ویام</string>
     <string name="login_title">ورود به سیستم</string>
-    <string name="login_subtitle">انبارداری ویام</string>
+    <string name="login_subtitle">ViamCo</string>
     <string name="username_label">نام کاربری</string>
     <string name="password_label">رمز عبور</string>
     <string name="login_button">ورود</string>
@@ -75,5 +75,5 @@
     <string name="parts_name">نام قطعه</string>
     <string name="parts_unit">واحد</string>
     <string name="parts_description">توضیحات</string>
-    <string name="parts_total_stock">موجودی کل</string>
+    <string name="parts_total_stock">موجودی</string>
 </resources>

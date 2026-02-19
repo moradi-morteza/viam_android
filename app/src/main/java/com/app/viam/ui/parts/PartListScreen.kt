@@ -115,11 +115,10 @@ fun PartListScreen(
                 }
             }
         }
-    ) { innerPadding ->
+    ) { _ ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
         ) {
             // Search bar
             OutlinedTextField(
@@ -202,16 +201,17 @@ private fun PartCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { }
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Filled.Inventory2,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = part.name, style = MaterialTheme.typography.titleSmall)
                 if (!part.sku.isNullOrBlank()) {
@@ -234,7 +234,7 @@ private fun PartCard(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = part.totalStock.toString(),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = if (part.totalStock > 0) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.error
                 )
@@ -245,8 +245,9 @@ private fun PartCard(
                 )
             }
 
+            Spacer(modifier = Modifier.width(8.dp))
+
             if (showMenu) {
-                Spacer(modifier = Modifier.width(4.dp))
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
