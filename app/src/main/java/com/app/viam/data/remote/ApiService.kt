@@ -1,13 +1,17 @@
 package com.app.viam.data.remote
 
+import com.app.viam.data.model.Box
+import com.app.viam.data.model.BoxTransaction
 import com.app.viam.data.model.CreateStaffRequest
 import com.app.viam.data.model.LoginRequest
 import com.app.viam.data.model.LoginResponse
+import com.app.viam.data.model.PaginatedBoxes
 import com.app.viam.data.model.PaginatedParts
 import com.app.viam.data.model.Part
 import com.app.viam.data.model.PartRequest
 import com.app.viam.data.model.UpdateStaffRequest
 import com.app.viam.data.model.User
+import com.app.viam.data.model.Zone
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -70,4 +74,28 @@ interface ApiService {
 
     @DELETE("parts/{id}")
     suspend fun deletePart(@Path("id") id: Int): Response<Map<String, String>>
+
+    // --- Warehouse ---
+
+    @GET("warehouse/tree")
+    suspend fun getWarehouseTree(): Response<List<Zone>>
+
+    @GET("boxes")
+    suspend fun getBoxes(
+        @Query("search") search: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 20,
+        @Query("zone_id") zoneId: Int? = null,
+        @Query("row_id") rowId: Int? = null
+    ): Response<PaginatedBoxes>
+
+    @GET("boxes/{id}")
+    suspend fun getBox(@Path("id") id: Int): Response<Box>
+
+    @GET("boxes/{boxId}/transactions")
+    suspend fun getBoxTransactions(
+        @Path("boxId") boxId: Int,
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 50
+    ): Response<Map<String, Any>>
 }

@@ -30,6 +30,12 @@ class HomeViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
     }
 
+    fun refreshMe() {
+        viewModelScope.launch {
+            authRepository.fetchMe()
+        }
+    }
+
     fun onLogoutNavigated() = _uiState.update { it.copy(isLoggedOut = false) }
 
     fun onLogoutConfirmed() {

@@ -29,6 +29,7 @@ import com.app.viam.data.model.Part
 import com.app.viam.data.model.User
 import com.app.viam.data.repository.PartRepository
 import com.app.viam.data.repository.PersonnelRepository
+import com.app.viam.data.repository.WarehouseRepository
 import com.app.viam.ui.common.DrawerScreen
 import com.app.viam.ui.common.MainScaffold
 import com.app.viam.ui.developer.DeveloperScreen
@@ -42,9 +43,14 @@ import com.app.viam.ui.personnel.PersonnelListViewModel
 import com.app.viam.ui.personnel.StaffFormScreen
 import com.app.viam.ui.personnel.StaffFormViewModel
 import com.app.viam.ui.profile.ProfileScreen
+import com.app.viam.ui.warehouse.BoxDetailScreen
+import com.app.viam.ui.warehouse.BoxDetailViewModel
+import com.app.viam.ui.warehouse.WarehouseListScreen
+import com.app.viam.ui.warehouse.WarehouseListViewModel
 
 private enum class PersonnelSubScreenType { LIST, CREATE, EDIT }
 private enum class PartSubScreenType { LIST, CREATE, EDIT }
+private enum class WarehouseSubScreenType { LIST, DETAIL }
 
 @Composable
 fun HomeScreen(
@@ -58,10 +64,13 @@ fun HomeScreen(
     var staffToEdit by remember { mutableStateOf<User?>(null) }
     var partSubScreen by rememberSaveable { mutableStateOf(PartSubScreenType.LIST) }
     var partToEdit by remember { mutableStateOf<Part?>(null) }
+    var warehouseSubScreen by rememberSaveable { mutableStateOf(WarehouseSubScreenType.LIST) }
+    var selectedBoxId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     BackHandler(
         enabled = personnelSubScreen != PersonnelSubScreenType.LIST ||
                 partSubScreen != PartSubScreenType.LIST ||
+                warehouseSubScreen != WarehouseSubScreenType.LIST ||
                 currentScreen != DrawerScreen.HOME
     ) {
         when {
@@ -72,6 +81,10 @@ fun HomeScreen(
             partSubScreen != PartSubScreenType.LIST -> {
                 partSubScreen = PartSubScreenType.LIST
                 partToEdit = null
+            }
+            warehouseSubScreen != WarehouseSubScreenType.LIST -> {
+                warehouseSubScreen = WarehouseSubScreenType.LIST
+                selectedBoxId = null
             }
             currentScreen != DrawerScreen.HOME -> currentScreen = DrawerScreen.HOME
         }
@@ -85,6 +98,9 @@ fun HomeScreen(
     }
 
     LaunchedEffect(currentScreen) {
+        if (currentScreen == DrawerScreen.HOME) {
+            viewModel.refreshMe()
+        }
         if (currentScreen != DrawerScreen.PERSONNEL) {
             personnelSubScreen = PersonnelSubScreenType.LIST
             staffToEdit = null
@@ -92,6 +108,10 @@ fun HomeScreen(
         if (currentScreen != DrawerScreen.PARTS) {
             partSubScreen = PartSubScreenType.LIST
             partToEdit = null
+        }
+        if (currentScreen != DrawerScreen.WAREHOUSE) {
+            warehouseSubScreen = WarehouseSubScreenType.LIST
+            selectedBoxId = null
         }
     }
 
@@ -101,12 +121,16 @@ fun HomeScreen(
     val canViewParts = currentUser?.isAdmin() == true ||
             currentUser?.hasPermission("view-parts") == true ||
             currentUser?.hasPermission("manage-parts") == true
+    val canViewWarehouse = currentUser?.isAdmin() == true ||
+            currentUser?.hasPermission("view-warehouse") == true
 
     // Sub-form screens (have their own TopAppBar with back)
     val isInPersonnelForm = currentScreen == DrawerScreen.PERSONNEL &&
             personnelSubScreen != PersonnelSubScreenType.LIST
     val isInPartForm = currentScreen == DrawerScreen.PARTS &&
             partSubScreen != PartSubScreenType.LIST
+    val isInBoxDetail = currentScreen == DrawerScreen.WAREHOUSE &&
+            warehouseSubScreen == WarehouseSubScreenType.DETAIL
 
     if (isInPersonnelForm) {
         val repo = PersonnelRepository()
@@ -138,12 +162,26 @@ fun HomeScreen(
         return
     }
 
+    if (isInBoxDetail && selectedBoxId != null) {
+        val repo = WarehouseRepository()
+        val detailVm: BoxDetailViewModel = viewModel(
+            key = "box_detail_$selectedBoxId",
+            factory = BoxDetailViewModel.Factory(repo, selectedBoxId!!)
+        )
+        BoxDetailScreen(
+            viewModel = detailVm,
+            onBack = { warehouseSubScreen = WarehouseSubScreenType.LIST; selectedBoxId = null }
+        )
+        return
+    }
+
     val screenTitle = when {
         currentScreen == DrawerScreen.HOME -> stringResource(R.string.home_welcome)
         currentScreen == DrawerScreen.PROFILE -> stringResource(R.string.profile_title)
         currentScreen == DrawerScreen.DEVELOPER -> stringResource(R.string.developer_title)
         currentScreen == DrawerScreen.PERSONNEL -> stringResource(R.string.personnel_title)
         currentScreen == DrawerScreen.PARTS -> stringResource(R.string.parts_title)
+        currentScreen == DrawerScreen.WAREHOUSE -> stringResource(R.string.warehouse_title)
         else -> stringResource(R.string.app_name)
     }
 
@@ -154,7 +192,8 @@ fun HomeScreen(
         onNavigate = { currentScreen = it },
         onLogout = { viewModel.onLogoutConfirmed() },
         showPersonnel = canViewPersonnel,
-        showParts = canViewParts
+        showParts = canViewParts,
+        showWarehouse = canViewWarehouse
     ) { contentModifier ->
         when (currentScreen) {
             DrawerScreen.HOME -> HomeDashboard(uiState = uiState, modifier = contentModifier)
@@ -192,6 +231,22 @@ fun HomeScreen(
                         onNavigateToEdit = { part ->
                             partToEdit = part
                             partSubScreen = PartSubScreenType.EDIT
+                        },
+                        modifier = contentModifier
+                    )
+                }
+            }
+            DrawerScreen.WAREHOUSE -> {
+                if (canViewWarehouse && currentUser != null) {
+                    val repo = WarehouseRepository()
+                    val listVm: WarehouseListViewModel = viewModel(
+                        factory = WarehouseListViewModel.Factory(repo, currentUser)
+                    )
+                    WarehouseListScreen(
+                        viewModel = listVm,
+                        onNavigateToDetail = { boxId ->
+                            selectedBoxId = boxId
+                            warehouseSubScreen = WarehouseSubScreenType.DETAIL
                         },
                         modifier = contentModifier
                     )

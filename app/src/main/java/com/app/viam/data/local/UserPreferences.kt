@@ -42,6 +42,12 @@ class UserPreferences(private val context: Context) {
         }
     }
 
+    suspend fun saveUser(user: User) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_USER_JSON] = gson.toJson(user)
+        }
+    }
+
     suspend fun clearAuthData() {
         context.dataStore.edit { prefs ->
             prefs.remove(KEY_TOKEN)

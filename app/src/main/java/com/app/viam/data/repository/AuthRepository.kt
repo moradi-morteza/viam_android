@@ -71,6 +71,24 @@ class AuthRepository(private val userPreferences: UserPreferences) {
         }
     }
 
+    suspend fun fetchMe(): AuthResult<User> {
+        return try {
+            val response = api.me()
+            when {
+                response.isSuccessful -> {
+                    val user = response.body()!!
+                    userPreferences.saveUser(user)
+                    AuthResult.Success(user)
+                }
+                else -> AuthResult.Error("خطا در دریافت اطلاعات کاربر")
+            }
+        } catch (e: IOException) {
+            AuthResult.NetworkError
+        } catch (e: Exception) {
+            AuthResult.Error("خطای غیرمنتظره رخ داد")
+        }
+    }
+
     suspend fun initializeTokenCache() {
         val token = userPreferences.getToken()
         NetworkModule.updateToken(token)

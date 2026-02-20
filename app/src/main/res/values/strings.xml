@@ -77,4 +77,37 @@
     <string name="parts_description">توضیحات</string>
     <string name="parts_total_stock">موجودی</string>
     <string name="refresh">بارگذاری مجدد</string>
+
+    <!-- Warehouse Screen -->
+    <string name="nav_warehouse">انبار</string>
+    <string name="warehouse_title">انبار</string>
+    <string name="warehouse_empty">جعبه‌ای یافت نشد</string>
+    <string name="warehouse_search_hint">جستجو با کد جعبه یا نام قطعه…</string>
+    <string name="warehouse_filter">فیلتر</string>
+    <string name="warehouse_clear_filter">حذف فیلتر</string>
+    <string name="warehouse_all_zones">همه</string>
+    <string name="warehouse_filter_select_zone">انتخاب ناحیه</string>
+    <string name="warehouse_filter_select_shelf">انتخاب قفسه</string>
+    <string name="warehouse_filter_select_row">انتخاب ردیف</string>
+    <string name="warehouse_filter_all">همه جعبه‌ها</string>
+    <string name="warehouse_filter_all_in_zone">همه جعبه‌های %s</string>
+    <string name="warehouse_box_count">جعبه</string>
+    <string name="warehouse_zone">ناحیه</string>
+    <string name="warehouse_shelf">قفسه</string>
+    <string name="warehouse_row">ردیف</string>
+    <string name="warehouse_box_code">کد جعبه</string>
+    <string name="warehouse_box_prefix">جعبه</string>
+    <string name="warehouse_quantity">موجودی</string>
+    <string name="warehouse_location">مکان</string>
+    <string name="warehouse_transactions">تراکنش‌ها</string>
+    <string name="warehouse_no_part">بدون قطعه</string>
+    <string name="warehouse_active_filter">فیلتر فعال</string>
+    <string name="warehouse_no_transactions">تراکنشی ثبت نشده</string>
+    <string name="transaction_type_in">ورود</string>
+    <string name="transaction_type_out">خروج</string>
+    <string name="transaction_type_adjust">اصلاح</string>
+    <string name="transaction_doer">انجام‌دهنده</string>
+    <string name="transaction_description">توضیحات</string>
+    <string name="transaction_reference">مرجع</string>
+    <string name="transaction_balance_after">موجودی بعد</string>
 </resources>
