@@ -76,4 +76,5 @@
     <string name="parts_unit">واحد</string>
     <string name="parts_description">توضیحات</string>
     <string name="parts_total_stock">موجودی</string>
+    <string name="refresh">بارگذاری مجدد</string>
 </resources>

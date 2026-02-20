@@ -19,12 +19,18 @@ import kotlinx.coroutines.launch
 data class PartListUiState(
     val parts: List<Part> = emptyList(),
     val isLoading: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val canLoadMore: Boolean = false,
     val error: String? = null,
     val searchQuery: String = "",
     val deleteConfirmId: Int? = null,
     val isDeleting: Boolean = false,
     val navigateToCreate: Boolean = false,
-    val navigateToEdit: Part? = null
+    val navigateToEdit: Part? = null,
+    val currentPage: Int = 1,
+    val lastPage: Int = 1,
+    val total: Int = 0
 )
 
 @OptIn(FlowPreview::class)
@@ -38,32 +44,78 @@ class PartListViewModel(
 
     private val _searchFlow = MutableStateFlow("")
 
+    companion object {
+        const val PER_PAGE = 20
+    }
+
     init {
-        loadParts()
+        loadParts(page = 1, mode = LoadMode.INITIAL)
         viewModelScope.launch {
             _searchFlow
                 .debounce(350)
                 .distinctUntilChanged()
-                .collect { query -> loadParts(query) }
+                .collect { _ -> loadParts(page = 1, mode = LoadMode.INITIAL) }
         }
     }
 
-    fun loadParts(search: String = _uiState.value.searchQuery) {
+    private enum class LoadMode { INITIAL, APPEND, REFRESH }
+
+    private fun loadParts(page: Int, mode: LoadMode) {
+        val state = _uiState.value
+        if (state.isLoading || state.isLoadingMore || state.isRefreshing) return
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            when (val result = repository.getParts(search)) {
-                is AuthResult.Success -> _uiState.update {
-                    it.copy(isLoading = false, parts = result.data)
+            _uiState.update {
+                it.copy(
+                    isLoading = mode == LoadMode.INITIAL,
+                    isLoadingMore = mode == LoadMode.APPEND,
+                    isRefreshing = mode == LoadMode.REFRESH,
+                    error = null
+                )
+            }
+
+            val search = _uiState.value.searchQuery
+            when (val result = repository.getParts(
+                search = search.ifBlank { null },
+                page = page,
+                perPage = PER_PAGE
+            )) {
+                is AuthResult.Success -> {
+                    val newItems = result.data.data
+                    val accumulated = if (mode == LoadMode.APPEND)
+                        _uiState.value.parts + newItems
+                    else
+                        newItems
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isLoadingMore = false,
+                            isRefreshing = false,
+                            parts = accumulated,
+                            currentPage = result.data.currentPage,
+                            lastPage = result.data.lastPage,
+                            total = result.data.total,
+                            canLoadMore = result.data.currentPage < result.data.lastPage
+                        )
+                    }
                 }
                 is AuthResult.Error -> _uiState.update {
-                    it.copy(isLoading = false, error = result.message)
+                    it.copy(isLoading = false, isLoadingMore = false, isRefreshing = false, error = result.message)
                 }
                 is AuthResult.NetworkError -> _uiState.update {
-                    it.copy(isLoading = false, error = "اتصال به اینترنت برقرار نیست")
+                    it.copy(isLoading = false, isLoadingMore = false, isRefreshing = false, error = "اتصال به اینترنت برقرار نیست")
                 }
             }
         }
     }
+
+    fun loadNextPage() {
+        val state = _uiState.value
+        if (!state.canLoadMore || state.isLoadingMore || state.isLoading || state.isRefreshing) return
+        loadParts(page = state.currentPage + 1, mode = LoadMode.APPEND)
+    }
+
+    fun onRefresh() = loadParts(page = 1, mode = LoadMode.REFRESH)
 
     fun onSearchChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
@@ -85,9 +137,8 @@ class PartListViewModel(
             _uiState.update { it.copy(isDeleting = true, deleteConfirmId = null) }
             when (val result = repository.deletePart(id)) {
                 is AuthResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(isDeleting = false, parts = state.parts.filter { it.id != id })
-                    }
+                    _uiState.update { it.copy(isDeleting = false) }
+                    loadParts(page = 1, mode = LoadMode.INITIAL)
                 }
                 is AuthResult.Error -> _uiState.update {
                     it.copy(isDeleting = false, error = result.message)

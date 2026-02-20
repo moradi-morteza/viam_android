@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,10 +28,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,12 +42,14 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -54,7 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.viam.R
 import com.app.viam.data.model.Part
+import kotlinx.coroutines.flow.distinctUntilChanged
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartListScreen(
     viewModel: PartListViewModel,
@@ -72,19 +77,28 @@ fun PartListScreen(
             onNavigateToCreate()
         }
     }
-
     LaunchedEffect(uiState.navigateToEdit) {
         uiState.navigateToEdit?.let { part ->
             viewModel.onEditNavigated()
             onNavigateToEdit(part)
         }
     }
-
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.onErrorDismissed()
         }
+    }
+
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            val info = listState.layoutInfo
+            val total = info.totalItemsCount
+            val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: 0
+            total > 0 && lastVisible >= total - 3
+        }
+            .distinctUntilChanged()
+            .collect { nearEnd -> if (nearEnd) viewModel.loadNextPage() }
     }
 
     if (uiState.deleteConfirmId != null) {
@@ -108,6 +122,7 @@ fun PartListScreen(
     Scaffold(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButtonPosition = FabPosition.Start,
         floatingActionButton = {
             if (viewModel.canCreate) {
                 FloatingActionButton(onClick = viewModel::onCreateClicked) {
@@ -116,11 +131,8 @@ fun PartListScreen(
             }
         }
     ) { _ ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            // Search bar
+        Column(modifier = Modifier.fillMaxSize()) {
+
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = viewModel::onSearchChange,
@@ -139,42 +151,79 @@ fun PartListScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                when {
-                    uiState.isLoading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                    }
-                    uiState.parts.isEmpty() -> {
-                        Text(
-                            text = stringResource(R.string.parts_empty),
-                            modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    else -> {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                                start = 16.dp, end = 16.dp, bottom = 80.dp
-                            ),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(uiState.parts, key = { it.id }) { part ->
-                                PartCard(
-                                    part = part,
-                                    canEdit = viewModel.canEdit,
-                                    canDelete = viewModel.canDelete,
-                                    onEdit = { viewModel.onEditClicked(part) },
-                                    onDelete = { viewModel.onDeleteClicked(part.id) }
-                                )
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = viewModel::onRefresh,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when {
+                        uiState.isLoading -> {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        }
+                        uiState.parts.isEmpty() -> {
+                            Text(
+                                text = stringResource(R.string.parts_empty),
+                                modifier = Modifier.align(Alignment.Center),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        else -> {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(
+                                    start = 16.dp, end = 16.dp,
+                                    top = 4.dp, bottom = 88.dp
+                                ),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(uiState.parts, key = { it.id }) { part ->
+                                    PartCard(
+                                        part = part,
+                                        canEdit = viewModel.canEdit,
+                                        canDelete = viewModel.canDelete,
+                                        onEdit = { viewModel.onEditClicked(part) },
+                                        onDelete = { viewModel.onDeleteClicked(part.id) }
+                                    )
+                                }
+
+                                if (uiState.isLoadingMore) {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                                        }
+                                    }
+                                }
+
+                                if (!uiState.canLoadMore && !uiState.isLoadingMore) {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 12.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "مجموع ${uiState.total} قطعه",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (uiState.isDeleting) {
+                                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                             }
                         }
                     }
-                }
-
-                if (uiState.isDeleting) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
             }
         }
@@ -230,7 +279,7 @@ private fun PartCard(
                     )
                 }
             }
-            // Stock badge
+
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = part.totalStock.toString(),

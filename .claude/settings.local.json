@@ -14,7 +14,11 @@
       "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/common/FormFields.kt\":*)",
       "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/personnel/StaffFormScreen.kt\":*)",
       "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/home/HomeScreen.kt\":*)",
-      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/auth/LoginScreen.kt\":*)"
+      "Bash(\"/mnt/c/Users/morteza/Desktop/viam_android/app/src/main/java/com/app/viam/ui/auth/LoginScreen.kt\":*)",
+      "Bash(python3:*)",
+      "Bash(npm install:*)",
+      "Bash(./gradlew:*)",
+      "Bash(./gradlew dependencies:*)"
     ]
   }
 }

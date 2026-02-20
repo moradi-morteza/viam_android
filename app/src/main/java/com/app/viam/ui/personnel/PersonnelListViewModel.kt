@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 data class PersonnelListUiState(
     val staffList: List<User> = emptyList(),
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val error: String? = null,
     val deleteConfirmId: Int? = null,        // ID of staff pending delete confirmation
     val isDeleting: Boolean = false,
@@ -34,22 +35,27 @@ class PersonnelListViewModel(
         loadStaffs()
     }
 
-    fun loadStaffs() {
+    fun loadStaffs(isRefresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update {
+                if (isRefresh) it.copy(isRefreshing = true, error = null)
+                else it.copy(isLoading = true, error = null)
+            }
             when (val result = repository.getStaffs()) {
                 is AuthResult.Success -> _uiState.update {
-                    it.copy(isLoading = false, staffList = result.data)
+                    it.copy(isLoading = false, isRefreshing = false, staffList = result.data)
                 }
                 is AuthResult.Error -> _uiState.update {
-                    it.copy(isLoading = false, error = result.message)
+                    it.copy(isLoading = false, isRefreshing = false, error = result.message)
                 }
                 is AuthResult.NetworkError -> _uiState.update {
-                    it.copy(isLoading = false, error = "اتصال به اینترنت برقرار نیست")
+                    it.copy(isLoading = false, isRefreshing = false, error = "اتصال به اینترنت برقرار نیست")
                 }
             }
         }
     }
+
+    fun onRefresh() = loadStaffs(isRefresh = true)
 
     fun onCreateClicked() = _uiState.update { it.copy(navigateToCreate = true) }
     fun onCreateNavigated() = _uiState.update { it.copy(navigateToCreate = false) }

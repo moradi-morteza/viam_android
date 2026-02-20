@@ -26,6 +26,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +37,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,6 +52,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.viam.R
 import com.app.viam.data.model.User
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonnelListScreen(
     viewModel: PersonnelListViewModel,
@@ -65,14 +69,12 @@ fun PersonnelListScreen(
             onNavigateToCreate()
         }
     }
-
     LaunchedEffect(uiState.navigateToEdit) {
         uiState.navigateToEdit?.let { staff ->
             viewModel.onEditNavigated()
             onNavigateToEdit(staff)
         }
     }
-
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
@@ -101,6 +103,7 @@ fun PersonnelListScreen(
     Scaffold(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButtonPosition = FabPosition.Start,
         floatingActionButton = {
             if (viewModel.canCreate) {
                 FloatingActionButton(onClick = viewModel::onCreateClicked) {
@@ -109,43 +112,47 @@ fun PersonnelListScreen(
             }
         }
     ) { innerPadding ->
-        Box(
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = viewModel::onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                uiState.staffList.isEmpty() -> {
-                    Text(
-                        text = stringResource(R.string.personnel_empty),
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(uiState.staffList, key = { it.id }) { staff ->
-                            StaffCard(
-                                staff = staff,
-                                canEdit = viewModel.canEdit,
-                                canDelete = viewModel.canDelete,
-                                onEdit = { viewModel.onEditClicked(staff) },
-                                onDelete = { viewModel.onDeleteClicked(staff.id) }
-                            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    uiState.isLoading -> {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+                    uiState.staffList.isEmpty() -> {
+                        Text(
+                            text = stringResource(R.string.personnel_empty),
+                            modifier = Modifier.align(Alignment.Center),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(uiState.staffList, key = { it.id }) { staff ->
+                                StaffCard(
+                                    staff = staff,
+                                    canEdit = viewModel.canEdit,
+                                    canDelete = viewModel.canDelete,
+                                    onEdit = { viewModel.onEditClicked(staff) },
+                                    onDelete = { viewModel.onDeleteClicked(staff.id) }
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            if (uiState.isDeleting) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                if (uiState.isDeleting) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
             }
         }
     }
@@ -170,7 +177,7 @@ private fun StaffCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { /* ripple effect on card tap */ }
+                .clickable { }
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -182,10 +189,7 @@ private fun StaffCard(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = staff.name,
-                    style = MaterialTheme.typography.titleSmall
-                )
+                Text(text = staff.name, style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = staff.username,
@@ -200,7 +204,6 @@ private fun StaffCard(
                     )
                 }
             }
-            // Role badge
             Text(
                 text = if (staff.isAdmin()) stringResource(R.string.profile_role_admin)
                        else stringResource(R.string.profile_role_staff),
@@ -210,7 +213,6 @@ private fun StaffCard(
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
 
-            // 3-dot menu
             if (showMenu) {
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
@@ -228,38 +230,24 @@ private fun StaffCard(
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.personnel_edit)) },
                                 leadingIcon = {
-                                    Icon(
-                                        Icons.Filled.Edit,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                    Icon(Icons.Filled.Edit, contentDescription = null,
+                                        modifier = Modifier.size(18.dp))
                                 },
-                                onClick = {
-                                    menuExpanded = false
-                                    onEdit()
-                                }
+                                onClick = { menuExpanded = false; onEdit() }
                             )
                         }
                         if (canDelete) {
                             DropdownMenuItem(
                                 text = {
-                                    Text(
-                                        stringResource(R.string.personnel_delete),
-                                        color = MaterialTheme.colorScheme.error
-                                    )
+                                    Text(stringResource(R.string.personnel_delete),
+                                        color = MaterialTheme.colorScheme.error)
                                 },
                                 leadingIcon = {
-                                    Icon(
-                                        Icons.Filled.Delete,
-                                        contentDescription = null,
+                                    Icon(Icons.Filled.Delete, contentDescription = null,
                                         tint = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                        modifier = Modifier.size(18.dp))
                                 },
-                                onClick = {
-                                    menuExpanded = false
-                                    onDelete()
-                                }
+                                onClick = { menuExpanded = false; onDelete() }
                             )
                         }
                     }

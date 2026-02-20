@@ -3,6 +3,7 @@ package com.app.viam.data.remote
 import com.app.viam.data.model.CreateStaffRequest
 import com.app.viam.data.model.LoginRequest
 import com.app.viam.data.model.LoginResponse
+import com.app.viam.data.model.PaginatedParts
 import com.app.viam.data.model.Part
 import com.app.viam.data.model.PartRequest
 import com.app.viam.data.model.UpdateStaffRequest
@@ -52,7 +53,11 @@ interface ApiService {
     // --- Parts ---
 
     @GET("parts")
-    suspend fun getParts(@Query("search") search: String? = null): Response<List<Part>>
+    suspend fun getParts(
+        @Query("search") search: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 20
+    ): Response<PaginatedParts>
 
     @GET("parts/{id}")
     suspend fun getPart(@Path("id") id: Int): Response<Part>

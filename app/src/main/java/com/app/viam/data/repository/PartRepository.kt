@@ -1,6 +1,7 @@
 package com.app.viam.data.repository
 
 import com.app.viam.data.model.ApiError
+import com.app.viam.data.model.PaginatedParts
 import com.app.viam.data.model.Part
 import com.app.viam.data.model.PartRequest
 import com.app.viam.data.remote.NetworkModule
@@ -12,9 +13,17 @@ class PartRepository {
     private val api = NetworkModule.apiService
     private val gson = Gson()
 
-    suspend fun getParts(search: String? = null): AuthResult<List<Part>> {
+    suspend fun getParts(
+        search: String? = null,
+        page: Int = 1,
+        perPage: Int = 20
+    ): AuthResult<PaginatedParts> {
         return try {
-            val response = api.getParts(search = search?.ifBlank { null })
+            val response = api.getParts(
+                search = search?.ifBlank { null },
+                page = page,
+                perPage = perPage
+            )
             when {
                 response.isSuccessful -> AuthResult.Success(response.body()!!)
                 response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
