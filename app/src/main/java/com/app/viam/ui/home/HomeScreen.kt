@@ -134,6 +134,7 @@ fun HomeScreen(
     val canManageStructure = canCreateZones || canEditZones || canDeleteZones ||
             canCreateShelves || canEditShelves || canDeleteShelves ||
             canCreateRows || canEditRows || canDeleteRows
+    val canDeleteBoxes = isAdmin || currentUser?.hasPermission("delete-boxes") == true
 
     // Sub-form screens (have their own TopAppBar with back)
     val isInPersonnelForm = currentScreen == DrawerScreen.PERSONNEL &&
@@ -181,6 +182,7 @@ fun HomeScreen(
         )
         BoxDetailScreen(
             viewModel = detailVm,
+            canDelete = canDeleteBoxes,
             onBack = { warehouseSubScreen = WarehouseSubScreenType.LIST; selectedBoxId = null }
         )
         return

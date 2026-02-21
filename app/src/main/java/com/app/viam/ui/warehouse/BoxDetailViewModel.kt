@@ -21,7 +21,11 @@ data class BoxDetailUiState(
     val showTransactionSheet: Boolean = false,
     val isSubmittingTransaction: Boolean = false,
     val transactionError: String? = null,
-    val transactionSuccess: Boolean = false
+    val transactionSuccess: Boolean = false,
+    // Delete
+    val showDeleteConfirm: Boolean = false,
+    val isDeleting: Boolean = false,
+    val deleted: Boolean = false
 )
 
 class BoxDetailViewModel(
@@ -84,6 +88,19 @@ class BoxDetailViewModel(
                         transactionError = "اتصال به اینترنت برقرار نیست"
                     )
                 }
+            }
+        }
+    }
+
+    fun onDeleteClicked() = _uiState.update { it.copy(showDeleteConfirm = true) }
+    fun onDeleteDismissed() = _uiState.update { it.copy(showDeleteConfirm = false) }
+    fun onDeleteConfirmed() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isDeleting = true, showDeleteConfirm = false) }
+            when (val r = repository.deleteBox(boxId)) {
+                is AuthResult.Success -> _uiState.update { it.copy(isDeleting = false, deleted = true) }
+                is AuthResult.Error -> _uiState.update { it.copy(isDeleting = false, error = r.message) }
+                is AuthResult.NetworkError -> _uiState.update { it.copy(isDeleting = false, error = "اتصال به اینترنت برقرار نیست") }
             }
         }
     }

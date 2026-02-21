@@ -142,6 +142,9 @@ interface ApiService {
     @GET("boxes/{id}")
     suspend fun getBox(@Path("id") id: Int): Response<Box>
 
+    @DELETE("boxes/{id}")
+    suspend fun deleteBox(@Path("id") id: Int): Response<Map<String, String>>
+
     @GET("boxes/{boxId}/transactions")
     suspend fun getBoxTransactions(
         @Path("boxId") boxId: Int,

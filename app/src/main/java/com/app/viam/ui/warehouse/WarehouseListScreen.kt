@@ -19,13 +19,18 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -38,11 +43,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -96,6 +104,25 @@ fun WarehouseListScreen(
         }
             .distinctUntilChanged()
             .collect { nearEnd -> if (nearEnd) viewModel.loadNextPage() }
+    }
+
+    // Delete confirmation dialog
+    if (uiState.deleteConfirmBoxId != null) {
+        AlertDialog(
+            onDismissRequest = viewModel::onDeleteBoxDismissed,
+            title = { Text(stringResource(R.string.warehouse_delete_box_title)) },
+            text = { Text(stringResource(R.string.warehouse_delete_box_msg)) },
+            confirmButton = {
+                TextButton(onClick = viewModel::onDeleteBoxConfirmed) {
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::onDeleteBoxDismissed) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     if (uiState.showFilterSheet) {
@@ -211,7 +238,9 @@ fun WarehouseListScreen(
                                 items(uiState.boxes, key = { it.id }) { box ->
                                     BoxCard(
                                         box = box,
-                                        onClick = { viewModel.onBoxClicked(box.id) }
+                                        canDelete = viewModel.canDeleteBoxes,
+                                        onClick = { viewModel.onBoxClicked(box.id) },
+                                        onDelete = { viewModel.onDeleteBoxRequested(box.id) }
                                     )
                                 }
 
@@ -309,13 +338,16 @@ private fun ActiveFilterCard(
 @Composable
 private fun BoxCard(
     box: Box,
-    onClick: () -> Unit
+    canDelete: Boolean,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val locationParts = mutableListOf<String>()
     box.row?.shelf?.zone?.name?.let { locationParts.add(it) }
     box.row?.shelf?.name?.let { locationParts.add(it) }
     box.row?.name?.let { locationParts.add(it) }
     val locationText = locationParts.joinToString(" › ")
+    var menuExpanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -327,7 +359,7 @@ private fun BoxCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -394,6 +426,30 @@ private fun BoxCard(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            if (canDelete) {
+                Box {
+                    IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            Icons.Filled.MoreVert,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Delete, null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.error)
+                            },
+                            onClick = { menuExpanded = false; onDelete() }
+                        )
+                    }
+                }
             }
         }
     }

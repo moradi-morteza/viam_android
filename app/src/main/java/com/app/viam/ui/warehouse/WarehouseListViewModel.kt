@@ -54,6 +54,9 @@ data class WarehouseListUiState(
     val rowsForSelectedShelf: List<Row> = emptyList(),
     val isLoadingShelvesForCreate: Boolean = false,
     val isLoadingRowsForCreate: Boolean = false,
+    // Delete box
+    val deleteConfirmBoxId: Int? = null,
+    val isDeletingBox: Boolean = false,
     // Navigation
     val navigateToDetail: Int? = null
 ) {
@@ -331,6 +334,26 @@ class WarehouseListViewModel(
         }
     }
 
+    // Delete box
+    fun onDeleteBoxRequested(boxId: Int) = _uiState.update { it.copy(deleteConfirmBoxId = boxId) }
+    fun onDeleteBoxDismissed() = _uiState.update { it.copy(deleteConfirmBoxId = null) }
+    fun onDeleteBoxConfirmed() {
+        val boxId = _uiState.value.deleteConfirmBoxId ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isDeletingBox = true, deleteConfirmBoxId = null) }
+            when (val r = repository.deleteBox(boxId)) {
+                is AuthResult.Success -> {
+                    _uiState.update {
+                        it.copy(isDeletingBox = false, boxes = it.boxes.filter { b -> b.id != boxId })
+                    }
+                    loadBoxes(page = 1, mode = LoadMode.REFRESH)
+                }
+                is AuthResult.Error -> _uiState.update { it.copy(isDeletingBox = false, error = r.message) }
+                is AuthResult.NetworkError -> _uiState.update { it.copy(isDeletingBox = false, error = "اتصال به اینترنت برقرار نیست") }
+            }
+        }
+    }
+
     // Navigation
     fun onBoxClicked(boxId: Int) = _uiState.update { it.copy(navigateToDetail = boxId) }
     fun onDetailNavigated() = _uiState.update { it.copy(navigateToDetail = null) }
@@ -339,6 +362,9 @@ class WarehouseListViewModel(
 
     val canViewWarehouse: Boolean get() =
         currentUser.isAdmin() || currentUser.hasPermission("view-warehouse")
+
+    val canDeleteBoxes: Boolean get() =
+        currentUser.isAdmin() || currentUser.hasPermission("delete-boxes")
 
     class Factory(
         private val repository: WarehouseRepository,

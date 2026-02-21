@@ -196,6 +196,19 @@ class WarehouseRepository {
         } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
     }
 
+    suspend fun deleteBox(id: Int): AuthResult<Unit> {
+        return try {
+            val response = api.deleteBox(id)
+            when {
+                response.isSuccessful -> AuthResult.Success(Unit)
+                response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در حذف جعبه")
+                else -> AuthResult.Error("خطا در حذف جعبه")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
     suspend fun createBox(request: BoxRequest): AuthResult<Box> {
         return try {
             val response = api.createBox(request)

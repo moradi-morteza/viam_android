@@ -16,7 +16,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +33,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
@@ -55,11 +58,17 @@ import java.util.Date
 @Composable
 fun BoxDetailScreen(
     viewModel: BoxDetailViewModel,
+    canDelete: Boolean,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Navigate back after successful delete
+    LaunchedEffect(uiState.deleted) {
+        if (uiState.deleted) onBack()
+    }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
@@ -74,6 +83,29 @@ fun BoxDetailScreen(
             snackbarHostState.showSnackbar(successMsg)
             viewModel.onTransactionSuccessConsumed()
         }
+    }
+
+    // Delete confirm dialog
+    if (uiState.showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = viewModel::onDeleteDismissed,
+            title = { Text(stringResource(R.string.warehouse_delete_box_title)) },
+            text = { Text(stringResource(R.string.warehouse_delete_box_msg)) },
+            confirmButton = {
+                TextButton(onClick = viewModel::onDeleteConfirmed, enabled = !uiState.isDeleting) {
+                    Text(
+                        if (uiState.isDeleting) stringResource(R.string.loading)
+                        else stringResource(R.string.delete),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::onDeleteDismissed, enabled = !uiState.isDeleting) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     // Transaction form sheet
@@ -115,6 +147,17 @@ fun BoxDetailScreen(
                             Icons.AutoMirrored.Rounded.ArrowBackIos,
                             contentDescription = stringResource(R.string.back)
                         )
+                    }
+                },
+                actions = {
+                    if (canDelete && uiState.box != null) {
+                        IconButton(onClick = viewModel::onDeleteClicked, enabled = !uiState.isDeleting) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = stringResource(R.string.delete),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             )

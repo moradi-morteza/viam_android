@@ -103,6 +103,8 @@
     <string name="warehouse_no_part">بدون قطعه</string>
     <string name="warehouse_active_filter">فیلتر فعال</string>
     <string name="warehouse_no_transactions">تراکنشی ثبت نشده</string>
+    <string name="warehouse_delete_box_title">حذف جعبه</string>
+    <string name="warehouse_delete_box_msg">آیا از حذف این جعبه اطمینان دارید؟ این عملیات قابل بازگشت نیست.</string>
     <string name="transaction_type_in">ورود</string>
     <string name="transaction_type_out">خروج</string>
     <string name="transaction_type_adjust">اصلاح</string>
