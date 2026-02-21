@@ -3,7 +3,9 @@ package com.app.viam.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.app.viam.data.model.DashboardStats
 import com.app.viam.data.model.User
+import com.app.viam.data.remote.NetworkModule
 import com.app.viam.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +16,10 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val user: User? = null,
     val isLoggingOut: Boolean = false,
-    val isLoggedOut: Boolean = false
+    val isLoggedOut: Boolean = false,
+    val stats: DashboardStats? = null,
+    val isLoadingStats: Boolean = false,
+    val statsError: String? = null
 )
 
 class HomeViewModel(private val authRepository: AuthRepository) : ViewModel() {
@@ -33,6 +38,23 @@ class HomeViewModel(private val authRepository: AuthRepository) : ViewModel() {
     fun refreshMe() {
         viewModelScope.launch {
             authRepository.fetchMe()
+        }
+        loadStats()
+    }
+
+    fun loadStats() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingStats = true, statsError = null) }
+            try {
+                val response = NetworkModule.apiService.getDashboardStats()
+                if (response.isSuccessful) {
+                    _uiState.update { it.copy(isLoadingStats = false, stats = response.body()) }
+                } else {
+                    _uiState.update { it.copy(isLoadingStats = false, statsError = "خطا در دریافت آمار") }
+                }
+            } catch (_: Exception) {
+                _uiState.update { it.copy(isLoadingStats = false, statsError = "اتصال به اینترنت برقرار نیست") }
+            }
         }
     }
 

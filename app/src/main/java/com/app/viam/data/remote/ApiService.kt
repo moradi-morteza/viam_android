@@ -12,6 +12,7 @@ import com.app.viam.data.model.PartRequest
 import com.app.viam.data.model.UpdateStaffRequest
 import com.app.viam.data.model.User
 import com.app.viam.data.model.BoxRequest
+import com.app.viam.data.model.DashboardStats
 import com.app.viam.data.model.Row
 import com.app.viam.data.model.RowRequest
 import com.app.viam.data.model.Shelf
@@ -40,6 +41,9 @@ interface ApiService {
 
     @GET("me")
     suspend fun me(): Response<User>
+
+    @GET("dashboard/stats")
+    suspend fun getDashboardStats(): Response<DashboardStats>
 
     // --- Personnel / Staff ---
 

@@ -141,4 +141,27 @@
     <!-- Part Picker -->
     <string name="part_picker_title">انتخاب قطعه</string>
     <string name="part_picker_hint">انتخاب قطعه (اختیاری)…</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_staff">پرسنل</string>
+    <string name="dashboard_admins">مدیران</string>
+    <string name="dashboard_zones">ناحیه‌ها</string>
+    <string name="dashboard_boxes">جعبه‌ها</string>
+    <string name="dashboard_parts_total">قطعات</string>
+    <string name="dashboard_total_stock">کل موجودی</string>
+    <string name="dashboard_warehouse_structure">ساختار انبار</string>
+    <string name="dashboard_shelves">قفسه‌ها</string>
+    <string name="dashboard_rows">ردیف‌ها</string>
+    <string name="dashboard_transactions_title">تراکنش‌ها</string>
+    <string name="dashboard_today">امروز</string>
+    <string name="dashboard_this_week">این هفته</string>
+    <string name="dashboard_this_month">این ماه</string>
+    <string name="dashboard_by_type">این ماه بر اساس نوع</string>
+    <string name="dashboard_recent_transactions">آخرین تراکنش‌ها</string>
+    <string name="dashboard_no_transactions">تراکنشی ثبت نشده</string>
+    <string name="dashboard_low_stock">هشدار موجودی کم</string>
+    <string name="dashboard_empty_boxes">جعبه خالی</string>
+    <string name="dashboard_welcome">خوش آمدید، %s</string>
+    <string name="dashboard_welcome_sub">سیستم مدیریت انبار ویام</string>
+    <string name="dashboard_loading">در حال بارگذاری آمار…</string>
 </resources>
