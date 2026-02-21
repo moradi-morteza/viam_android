@@ -40,6 +40,8 @@ import com.app.viam.ui.personnel.StaffFormViewModel
 import com.app.viam.ui.profile.ProfileScreen
 import com.app.viam.ui.warehouse.BoxDetailScreen
 import com.app.viam.ui.warehouse.BoxDetailViewModel
+import com.app.viam.ui.warehouse.ScanTransactScreen
+import com.app.viam.ui.warehouse.ScanTransactViewModel
 import com.app.viam.ui.warehouse.WarehouseListScreen
 import com.app.viam.ui.warehouse.WarehouseListViewModel
 import com.app.viam.ui.warehouse.WarehouseStructureScreen
@@ -47,7 +49,7 @@ import com.app.viam.ui.warehouse.WarehouseStructureViewModel
 
 private enum class PersonnelSubScreenType { LIST, CREATE, EDIT }
 private enum class PartSubScreenType { LIST, CREATE, EDIT }
-private enum class WarehouseSubScreenType { LIST, DETAIL }
+private enum class WarehouseSubScreenType { LIST, DETAIL, SCAN_TRANSACT }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +81,10 @@ fun HomeScreen(
             partSubScreen != PartSubScreenType.LIST -> {
                 partSubScreen = PartSubScreenType.LIST
                 partToEdit = null
+            }
+            warehouseSubScreen == WarehouseSubScreenType.SCAN_TRANSACT -> {
+                warehouseSubScreen = WarehouseSubScreenType.LIST
+                currentScreen = DrawerScreen.HOME
             }
             warehouseSubScreen != WarehouseSubScreenType.LIST -> {
                 warehouseSubScreen = WarehouseSubScreenType.LIST
@@ -135,6 +141,7 @@ fun HomeScreen(
             canCreateShelves || canEditShelves || canDeleteShelves ||
             canCreateRows || canEditRows || canDeleteRows
     val canDeleteBoxes = isAdmin || currentUser?.hasPermission("delete-boxes") == true
+    val canPerformTransactions = isAdmin || currentUser?.hasPermission("perform-transactions") == true
 
     // Sub-form screens (have their own TopAppBar with back)
     val isInPersonnelForm = currentScreen == DrawerScreen.PERSONNEL &&
@@ -143,6 +150,8 @@ fun HomeScreen(
             partSubScreen != PartSubScreenType.LIST
     val isInBoxDetail = currentScreen == DrawerScreen.WAREHOUSE &&
             warehouseSubScreen == WarehouseSubScreenType.DETAIL
+    val isInScanTransact = currentScreen == DrawerScreen.WAREHOUSE &&
+            warehouseSubScreen == WarehouseSubScreenType.SCAN_TRANSACT
 
     if (isInPersonnelForm) {
         val repo = PersonnelRepository()
@@ -188,6 +197,22 @@ fun HomeScreen(
         return
     }
 
+    if (isInScanTransact) {
+        val repo = WarehouseRepository()
+        val scanVm: ScanTransactViewModel = viewModel(
+            key = "scan_transact",
+            factory = ScanTransactViewModel.Factory(repo)
+        )
+        ScanTransactScreen(
+            viewModel = scanVm,
+            onBack = {
+                warehouseSubScreen = WarehouseSubScreenType.LIST
+                currentScreen = DrawerScreen.HOME
+            }
+        )
+        return
+    }
+
     val screenTitle = when {
         currentScreen == DrawerScreen.HOME -> stringResource(R.string.home_welcome)
         currentScreen == DrawerScreen.PROFILE -> stringResource(R.string.profile_title)
@@ -226,6 +251,12 @@ fun HomeScreen(
             DrawerScreen.HOME -> DashboardScreen(
                 uiState = uiState,
                 onRefresh = viewModel::loadStats,
+                onQuickTransact = if (canPerformTransactions) {
+                    {
+                        currentScreen = DrawerScreen.WAREHOUSE
+                        warehouseSubScreen = WarehouseSubScreenType.SCAN_TRANSACT
+                    }
+                } else null,
                 modifier = contentModifier
             )
             DrawerScreen.PROFILE -> {

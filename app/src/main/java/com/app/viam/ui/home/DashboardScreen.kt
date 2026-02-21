@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.StackedBarChart
 import androidx.compose.material.icons.filled.Warehouse
@@ -52,10 +54,15 @@ import java.time.Instant
 fun DashboardScreen(
     uiState: HomeUiState,
     onRefresh: () -> Unit,
+    onQuickTransact: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    // Show pull-to-refresh spinner only when refreshing already-loaded data,
+    // not on the initial load (to avoid double spinner with the center indicator).
+    val isRefreshing = uiState.isLoadingStats && uiState.stats != null
+
     PullToRefreshBox(
-        isRefreshing = uiState.isLoadingStats,
+        isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         modifier = modifier.fillMaxSize()
     ) {
@@ -75,6 +82,13 @@ fun DashboardScreen(
             // Welcome card
             item {
                 WelcomeCard(name = uiState.user?.name ?: "")
+            }
+
+            // Quick transaction shortcut
+            if (onQuickTransact != null) {
+                item {
+                    QuickTransactCard(onTap = onQuickTransact)
+                }
             }
 
             // Quick stats row (personnel + warehouse top-level)
@@ -568,6 +582,59 @@ private fun LowStockRow(box: LowStockBox) {
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
+            )
+        }
+    }
+}
+
+// ─── Quick transact card ──────────────────────────────────────────────────────
+
+@Composable
+private fun QuickTransactCard(onTap: () -> Unit) {
+    Card(
+        onClick = onTap,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.QrCodeScanner,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .size(28.dp),
+                    tint = MaterialTheme.colorScheme.secondary
+                )
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.quick_transaction),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = stringResource(R.string.quick_transaction_sub),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
             )
         }
     }

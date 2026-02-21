@@ -20,7 +20,12 @@
       "Bash(./gradlew:*)",
       "Bash(./gradlew dependencies:*)",
       "Bash(php artisan route:list:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(xargs:*)",
+      "Bash(php artisan migrate:*)",
+      "Bash(sudo php artisan migrate:*)",
+      "Bash(cd /home/morteza/viam_backend && composer require endroid/qr-code 2>&1)",
+      "Bash(grep:*)"
     ]
   }
 }

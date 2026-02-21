@@ -58,6 +58,7 @@ private enum class TxType(val value: String) {
 /**
  * Reusable bottom sheet for creating a warehouse transaction.
  *
+ * @param boxLabel         Box code/label shown as subtitle under the title (e.g. "BOX-001").
  * @param currentQuantity  Current box quantity (shown as reference).
  * @param isLoading        Whether the submit call is in flight.
  * @param error            Server error message to display, null = no error.
@@ -67,6 +68,8 @@ private enum class TxType(val value: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionFormSheet(
+    boxLabel: String = "",
+    boxLocation: String = "",
     currentQuantity: Double,
     isLoading: Boolean,
     error: String?,
@@ -115,6 +118,28 @@ fun TransactionFormSheet(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
+            if (boxLabel.isNotBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = boxLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (boxLocation.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                androidx.compose.material3.Surface(
+                    shape = MaterialTheme.shapes.extraSmall,
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        text = boxLocation,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 

@@ -3,6 +3,7 @@ package com.app.viam.data.repository
 import com.app.viam.data.model.ApiError
 import com.app.viam.data.model.PaginatedParts
 import com.app.viam.data.model.Part
+import com.app.viam.data.model.PartCategory
 import com.app.viam.data.model.PartRequest
 import com.app.viam.data.remote.NetworkModule
 import com.google.gson.Gson
@@ -84,6 +85,21 @@ class PartRepository {
                 response.code() == 404 -> AuthResult.Error("قطعه یافت نشد")
                 response.code() == 422 -> AuthResult.Error("قطعه در جعبه‌ها استفاده شده است")
                 else -> AuthResult.Error("خطا در حذف قطعه")
+            }
+        } catch (e: IOException) {
+            AuthResult.NetworkError
+        } catch (e: Exception) {
+            AuthResult.Error("خطای غیرمنتظره رخ داد")
+        }
+    }
+
+    suspend fun getPartCategories(): AuthResult<List<PartCategory>> {
+        return try {
+            val response = api.getPartCategoriesAll()
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
+                else -> AuthResult.Error("خطا در دریافت دسته‌بندی‌ها")
             }
         } catch (e: IOException) {
             AuthResult.NetworkError

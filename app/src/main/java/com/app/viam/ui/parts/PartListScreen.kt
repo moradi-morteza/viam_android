@@ -278,6 +278,20 @@ private fun PartCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                if (part.category != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    androidx.compose.material3.Surface(
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Text(
+                            text = part.category.name,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
 
             Column(horizontalAlignment = Alignment.End) {

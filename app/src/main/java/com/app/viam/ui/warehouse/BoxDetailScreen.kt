@@ -111,7 +111,14 @@ fun BoxDetailScreen(
     // Transaction form sheet
     val currentBox = uiState.box
     if (uiState.showTransactionSheet && currentBox != null) {
+        val locationParts = listOfNotNull(
+            currentBox.row?.shelf?.zone?.name,
+            currentBox.row?.shelf?.name,
+            currentBox.row?.name
+        )
         TransactionFormSheet(
+            boxLabel = currentBox.code,
+            boxLocation = locationParts.joinToString(" › "),
             currentQuantity = currentBox.quantity,
             isLoading = uiState.isSubmittingTransaction,
             error = uiState.transactionError,

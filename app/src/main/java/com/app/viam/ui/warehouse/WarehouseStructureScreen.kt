@@ -175,7 +175,7 @@ fun WarehouseStructureScreen(
         }
     ) { innerPadding ->
         PullToRefreshBox(
-            isRefreshing = uiState.isLoading,
+            isRefreshing = uiState.isLoading && uiState.zones.isNotEmpty(),
             onRefresh = viewModel::load,
             modifier = Modifier
                 .fillMaxSize()

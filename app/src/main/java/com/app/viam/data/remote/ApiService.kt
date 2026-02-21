@@ -8,6 +8,7 @@ import com.app.viam.data.model.LoginResponse
 import com.app.viam.data.model.PaginatedBoxes
 import com.app.viam.data.model.PaginatedParts
 import com.app.viam.data.model.Part
+import com.app.viam.data.model.PartCategory
 import com.app.viam.data.model.PartRequest
 import com.app.viam.data.model.UpdateStaffRequest
 import com.app.viam.data.model.User
@@ -86,6 +87,11 @@ interface ApiService {
     @DELETE("parts/{id}")
     suspend fun deletePart(@Path("id") id: Int): Response<Map<String, String>>
 
+    // --- Part Categories ---
+
+    @GET("part-categories/all")
+    suspend fun getPartCategoriesAll(): Response<List<PartCategory>>
+
     // --- Warehouse ---
 
     @GET("warehouse/tree")
@@ -141,6 +147,9 @@ interface ApiService {
 
     @GET("boxes/{id}")
     suspend fun getBox(@Path("id") id: Int): Response<Box>
+
+    @GET("boxes/by-code/{code}")
+    suspend fun getBoxByCode(@Path("code", encoded = true) code: String): Response<Box>
 
     @DELETE("boxes/{id}")
     suspend fun deleteBox(@Path("id") id: Int): Response<Map<String, String>>

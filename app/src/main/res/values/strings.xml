@@ -76,6 +76,8 @@
     <string name="parts_unit">واحد</string>
     <string name="parts_description">توضیحات</string>
     <string name="parts_total_stock">موجودی</string>
+    <string name="parts_category">دسته‌بندی</string>
+    <string name="parts_category_none">بدون دسته‌بندی</string>
     <string name="refresh">بارگذاری مجدد</string>
 
     <!-- Warehouse Screen -->
@@ -105,6 +107,20 @@
     <string name="warehouse_no_transactions">تراکنشی ثبت نشده</string>
     <string name="warehouse_delete_box_title">حذف جعبه</string>
     <string name="warehouse_delete_box_msg">آیا از حذف این جعبه اطمینان دارید؟ این عملیات قابل بازگشت نیست.</string>
+
+    <!-- QR Scan & Quick Transaction -->
+    <string name="quick_transaction">تراکنش سریع</string>
+    <string name="quick_transaction_sub">اسکن QR کد یا جستجو با کد جعبه</string>
+    <string name="scan_qr_title">اسکن QR کد</string>
+    <string name="scan_qr_hint">دوربین را به سمت کیوآر کد جعبه بگیرید</string>
+    <string name="box_code_search_hint">کد جعبه را وارد کنید</string>
+    <string name="box_code_search_button">جستجو</string>
+    <string name="box_not_found">جعبه با این کد یافت نشد</string>
+    <string name="scan_qr_permission_needed">برای اسکن، دسترسی به دوربین لازم است</string>
+    <string name="grant_camera_permission">اعطای دسترسی</string>
+    <string name="qr_invalid">کیوآر کد نامعتبر است</string>
+    <string name="scan_or_enter">یا کد جعبه را وارد کنید</string>
+    <string name="transaction_success_retry">تراکنش ثبت شد. می‌توانید ادامه دهید.</string>
     <string name="transaction_type_in">ورود</string>
     <string name="transaction_type_out">خروج</string>
     <string name="transaction_type_adjust">اصلاح</string>

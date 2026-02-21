@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.app.viam.data.model.Part
+import com.app.viam.data.model.PartCategory
 import com.app.viam.data.model.PartRequest
 import com.app.viam.data.repository.AuthResult
 import com.app.viam.data.repository.PartRepository
@@ -18,6 +19,9 @@ data class PartFormUiState(
     val name: String = "",
     val unit: String = "",
     val description: String = "",
+    val selectedCategoryId: Int? = null,
+    val categories: List<PartCategory> = emptyList(),
+    val isCategoriesLoading: Boolean = false,
     val nameError: String? = null,
     val generalError: String? = null,
     val isLoading: Boolean = false,
@@ -36,15 +40,33 @@ class PartFormViewModel(
             sku = editPart?.sku ?: "",
             name = editPart?.name ?: "",
             unit = editPart?.unit ?: "",
-            description = editPart?.description ?: ""
+            description = editPart?.description ?: "",
+            selectedCategoryId = editPart?.category?.id
         )
     )
     val uiState: StateFlow<PartFormUiState> = _uiState.asStateFlow()
+
+    init {
+        loadCategories()
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCategoriesLoading = true) }
+            when (val result = repository.getPartCategories()) {
+                is AuthResult.Success -> _uiState.update {
+                    it.copy(isCategoriesLoading = false, categories = result.data)
+                }
+                else -> _uiState.update { it.copy(isCategoriesLoading = false) }
+            }
+        }
+    }
 
     fun onSkuChange(v: String) = _uiState.update { it.copy(sku = v) }
     fun onNameChange(v: String) = _uiState.update { it.copy(name = v, nameError = null) }
     fun onUnitChange(v: String) = _uiState.update { it.copy(unit = v) }
     fun onDescriptionChange(v: String) = _uiState.update { it.copy(description = v) }
+    fun onCategorySelected(id: Int?) = _uiState.update { it.copy(selectedCategoryId = id) }
     fun onSaveNavigated() = _uiState.update { it.copy(isSaveSuccess = false) }
 
     fun onSaveClicked() {
@@ -57,7 +79,8 @@ class PartFormViewModel(
             sku = state.sku.ifBlank { null },
             name = state.name.trim(),
             description = state.description.ifBlank { null },
-            unit = state.unit.ifBlank { null }
+            unit = state.unit.ifBlank { null },
+            partCategoryId = state.selectedCategoryId
         )
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, generalError = null) }

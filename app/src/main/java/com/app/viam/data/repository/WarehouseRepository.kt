@@ -61,6 +61,22 @@ class WarehouseRepository {
         }
     }
 
+    suspend fun getBoxByCode(code: String): AuthResult<Box> {
+        return try {
+            val response = api.getBoxByCode(code)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 404 -> AuthResult.Error("جعبه با این کد یافت نشد")
+                response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
+                else -> AuthResult.Error("خطا در دریافت اطلاعات جعبه")
+            }
+        } catch (e: IOException) {
+            AuthResult.NetworkError
+        } catch (e: Exception) {
+            AuthResult.Error("خطای غیرمنتظره رخ داد")
+        }
+    }
+
     suspend fun getZones(): AuthResult<List<Zone>> {
         return try {
             val response = api.getZones()
