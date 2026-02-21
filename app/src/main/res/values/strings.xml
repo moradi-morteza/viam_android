@@ -165,6 +165,11 @@
     <string name="dashboard_welcome_sub">سیستم مدیریت انبار ویام</string>
     <string name="dashboard_loading">در حال بارگذاری آمار…</string>
 
+    <!-- Date/Time Picker -->
+    <string name="hour">ساعت</string>
+    <string name="minute">دقیقه</string>
+    <string name="time_picker_title">انتخاب زمان</string>
+
 
 
 

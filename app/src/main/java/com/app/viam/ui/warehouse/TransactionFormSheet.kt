@@ -3,6 +3,7 @@ package com.app.viam.ui.warehouse
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,18 +12,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.app.viam.R
 import com.app.viam.data.model.TransactionRequest
+import com.app.viam.ui.common.PersianDateTimePickerSheet
 
 // Transaction types
 private enum class TxType(val value: String) {
@@ -72,6 +80,10 @@ fun TransactionFormSheet(
     var newQtyText by remember { mutableStateOf(currentQuantity.toLong().toString()) }
     var reference by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    // Date/time — null means "now" (backend uses server time)
+    var selectedDateIso by remember { mutableStateOf<String?>(null) }
+    var selectedDateDisplay by remember { mutableStateOf<String?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     // Live diff for ADJUST
     val adjustDiff: Long? = if (selectedType == TxType.ADJUST) {
@@ -264,6 +276,61 @@ fun TransactionFormSheet(
                 }
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- Date / Time (optional) ---
+            Text(
+                text = stringResource(R.string.transaction_date_label),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            OutlinedCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDatePicker = true }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.CalendarMonth,
+                        contentDescription = null,
+                        tint = if (selectedDateDisplay != null)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = selectedDateDisplay ?: stringResource(R.string.transaction_date_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (selectedDateDisplay != null)
+                            MaterialTheme.colorScheme.onSurface
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (selectedDateDisplay != null) {
+                        IconButton(
+                            onClick = { selectedDateIso = null; selectedDateDisplay = null },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // --- Action buttons ---
@@ -286,7 +353,8 @@ fun TransactionFormSheet(
                             amountText = amountText,
                             newQtyText = newQtyText,
                             reference = reference.ifBlank { null },
-                            description = description.ifBlank { null }
+                            description = description.ifBlank { null },
+                            transactionDate = selectedDateIso
                         )
                         if (req != null) onSubmit(req)
                     },
@@ -302,6 +370,17 @@ fun TransactionFormSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
         }
+    }
+
+    if (showDatePicker) {
+        PersianDateTimePickerSheet(
+            onDismiss = { showDatePicker = false },
+            onConfirm = { iso, display ->
+                selectedDateIso = iso
+                selectedDateDisplay = display
+                showDatePicker = false
+            }
+        )
     }
 }
 
@@ -382,7 +461,8 @@ private fun buildRequest(
     amountText: String,
     newQtyText: String,
     reference: String?,
-    description: String?
+    description: String?,
+    transactionDate: String?
 ): TransactionRequest? {
     return when (type) {
         TxType.IN, TxType.OUT -> {
@@ -392,7 +472,8 @@ private fun buildRequest(
                 type = type.value,
                 amount = amount,
                 reference = reference,
-                description = description
+                description = description,
+                transactionDate = transactionDate
             )
         }
         TxType.ADJUST -> {
@@ -401,7 +482,8 @@ private fun buildRequest(
                 type = type.value,
                 newQuantity = qty,
                 reference = reference,
-                description = description
+                description = description,
+                transactionDate = transactionDate
             )
         }
     }
