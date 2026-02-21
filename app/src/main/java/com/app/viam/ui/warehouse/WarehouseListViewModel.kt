@@ -4,7 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.app.viam.data.model.Box
+import com.app.viam.data.model.BoxRequest
+import com.app.viam.data.model.Row
+import com.app.viam.data.model.RowRequest
+import com.app.viam.data.model.Shelf
+import com.app.viam.data.model.ShelfRequest
 import com.app.viam.data.model.Zone
+import com.app.viam.data.model.ZoneRequest
 import com.app.viam.data.model.User
 import com.app.viam.data.repository.AuthResult
 import com.app.viam.data.repository.WarehouseRepository
@@ -37,6 +43,17 @@ data class WarehouseListUiState(
     val showFilterSheet: Boolean = false,
     val treeData: List<Zone> = emptyList(),
     val isTreeLoading: Boolean = false,
+    // Create item sheet
+    val showCreateSheet: Boolean = false,
+    val createError: String? = null,
+    val isCreating: Boolean = false,
+    val createSuccess: Boolean = false,
+    // Cascading data for create form
+    val allZones: List<Zone> = emptyList(),
+    val shelvesForSelectedZone: List<Shelf> = emptyList(),
+    val rowsForSelectedShelf: List<Row> = emptyList(),
+    val isLoadingShelvesForCreate: Boolean = false,
+    val isLoadingRowsForCreate: Boolean = false,
     // Navigation
     val navigateToDetail: Int? = null
 ) {
@@ -191,6 +208,105 @@ class WarehouseListViewModel(
                     it.copy(isTreeLoading = false, treeData = result.data)
                 }
                 else -> _uiState.update { it.copy(isTreeLoading = false) }
+            }
+        }
+    }
+
+    // Create sheet
+    fun onCreateClicked() {
+        _uiState.update { it.copy(showCreateSheet = true, createError = null) }
+        if (_uiState.value.allZones.isEmpty()) loadZones()
+    }
+
+    fun onCreateSheetDismissed() =
+        _uiState.update { it.copy(showCreateSheet = false, createError = null) }
+
+    fun onCreateZoneSelected(zone: Zone) {
+        _uiState.update { it.copy(shelvesForSelectedZone = emptyList(), rowsForSelectedShelf = emptyList()) }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingShelvesForCreate = true) }
+            when (val r = repository.getShelves(zone.id)) {
+                is AuthResult.Success -> _uiState.update {
+                    it.copy(shelvesForSelectedZone = r.data, isLoadingShelvesForCreate = false)
+                }
+                else -> _uiState.update { it.copy(isLoadingShelvesForCreate = false) }
+            }
+        }
+    }
+
+    fun onCreateShelfSelected(shelf: Shelf) {
+        _uiState.update { it.copy(rowsForSelectedShelf = emptyList()) }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingRowsForCreate = true) }
+            when (val r = repository.getRows(shelf.id)) {
+                is AuthResult.Success -> _uiState.update {
+                    it.copy(rowsForSelectedShelf = r.data, isLoadingRowsForCreate = false)
+                }
+                else -> _uiState.update { it.copy(isLoadingRowsForCreate = false) }
+            }
+        }
+    }
+
+    fun createZone(name: String, description: String?) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCreating = true, createError = null) }
+            when (val r = repository.createZone(ZoneRequest(name, description))) {
+                is AuthResult.Success -> onCreateSuccess()
+                is AuthResult.Error -> _uiState.update { it.copy(isCreating = false, createError = r.message) }
+                is AuthResult.NetworkError -> _uiState.update { it.copy(isCreating = false, createError = "اتصال به اینترنت برقرار نیست") }
+            }
+        }
+    }
+
+    fun createShelf(zoneId: Int, name: String, description: String?) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCreating = true, createError = null) }
+            when (val r = repository.createShelf(ShelfRequest(zoneId, name, description))) {
+                is AuthResult.Success -> onCreateSuccess()
+                is AuthResult.Error -> _uiState.update { it.copy(isCreating = false, createError = r.message) }
+                is AuthResult.NetworkError -> _uiState.update { it.copy(isCreating = false, createError = "اتصال به اینترنت برقرار نیست") }
+            }
+        }
+    }
+
+    fun createRow(shelfId: Int, name: String, description: String?) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCreating = true, createError = null) }
+            when (val r = repository.createRow(RowRequest(shelfId, name, description))) {
+                is AuthResult.Success -> onCreateSuccess()
+                is AuthResult.Error -> _uiState.update { it.copy(isCreating = false, createError = r.message) }
+                is AuthResult.NetworkError -> _uiState.update { it.copy(isCreating = false, createError = "اتصال به اینترنت برقرار نیست") }
+            }
+        }
+    }
+
+    fun createBox(rowId: Int, code: String, partId: Int?, description: String?) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCreating = true, createError = null) }
+            when (val r = repository.createBox(BoxRequest(rowId, code, partId, description))) {
+                is AuthResult.Success -> onCreateSuccess()
+                is AuthResult.Error -> _uiState.update { it.copy(isCreating = false, createError = r.message) }
+                is AuthResult.NetworkError -> _uiState.update { it.copy(isCreating = false, createError = "اتصال به اینترنت برقرار نیست") }
+            }
+        }
+    }
+
+    private fun onCreateSuccess() {
+        _uiState.update {
+            it.copy(isCreating = false, showCreateSheet = false, createError = null, createSuccess = true)
+        }
+        loadBoxes(page = 1, mode = LoadMode.REFRESH)
+        // Reload tree so filter sheet reflects new items
+        loadTree()
+    }
+
+    fun onCreateSuccessConsumed() = _uiState.update { it.copy(createSuccess = false) }
+
+    private fun loadZones() {
+        viewModelScope.launch {
+            when (val r = repository.getZones()) {
+                is AuthResult.Success -> _uiState.update { it.copy(allZones = r.data) }
+                else -> {}
             }
         }
     }

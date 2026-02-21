@@ -11,7 +11,14 @@ import com.app.viam.data.model.Part
 import com.app.viam.data.model.PartRequest
 import com.app.viam.data.model.UpdateStaffRequest
 import com.app.viam.data.model.User
+import com.app.viam.data.model.BoxRequest
+import com.app.viam.data.model.Row
+import com.app.viam.data.model.RowRequest
+import com.app.viam.data.model.Shelf
+import com.app.viam.data.model.ShelfRequest
+import com.app.viam.data.model.TransactionRequest
 import com.app.viam.data.model.Zone
+import com.app.viam.data.model.ZoneRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -80,6 +87,27 @@ interface ApiService {
     @GET("warehouse/tree")
     suspend fun getWarehouseTree(): Response<List<Zone>>
 
+    @GET("zones")
+    suspend fun getZones(): Response<List<Zone>>
+
+    @POST("zones")
+    suspend fun createZone(@Body request: ZoneRequest): Response<Zone>
+
+    @GET("shelves")
+    suspend fun getShelves(@Query("zone_id") zoneId: Int? = null): Response<List<Shelf>>
+
+    @POST("shelves")
+    suspend fun createShelf(@Body request: ShelfRequest): Response<Shelf>
+
+    @GET("rows")
+    suspend fun getRows(@Query("shelf_id") shelfId: Int? = null): Response<List<Row>>
+
+    @POST("rows")
+    suspend fun createRow(@Body request: RowRequest): Response<Row>
+
+    @POST("boxes")
+    suspend fun createBox(@Body request: BoxRequest): Response<Box>
+
     @GET("boxes")
     suspend fun getBoxes(
         @Query("search") search: String? = null,
@@ -98,4 +126,10 @@ interface ApiService {
         @Query("page") page: Int = 1,
         @Query("per_page") perPage: Int = 50
     ): Response<Map<String, Any>>
+
+    @POST("boxes/{boxId}/transactions")
+    suspend fun createTransaction(
+        @Path("boxId") boxId: Int,
+        @Body request: TransactionRequest
+    ): Response<BoxTransaction>
 }

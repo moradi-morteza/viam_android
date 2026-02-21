@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inventory2
@@ -78,6 +79,14 @@ fun WarehouseListScreen(
         }
     }
 
+    val createSuccessMsg = stringResource(R.string.warehouse_create_success)
+    LaunchedEffect(uiState.createSuccess) {
+        if (uiState.createSuccess) {
+            snackbarHostState.showSnackbar(createSuccessMsg)
+            viewModel.onCreateSuccessConsumed()
+        }
+    }
+
     LaunchedEffect(listState) {
         snapshotFlow {
             val info = listState.layoutInfo
@@ -96,6 +105,25 @@ fun WarehouseListScreen(
             onFilterByZone = viewModel::onFilterByZone,
             onFilterByRow = viewModel::onFilterByRow,
             onClearFilter = viewModel::onClearFilter
+        )
+    }
+
+    if (uiState.showCreateSheet) {
+        CreateWarehouseItemSheet(
+            zones = uiState.allZones,
+            shelvesForZone = uiState.shelvesForSelectedZone,
+            rowsForShelf = uiState.rowsForSelectedShelf,
+            isLoadingShelves = uiState.isLoadingShelvesForCreate,
+            isLoadingRows = uiState.isLoadingRowsForCreate,
+            isSubmitting = uiState.isCreating,
+            error = uiState.createError,
+            onZoneSelected = viewModel::onCreateZoneSelected,
+            onShelfSelected = viewModel::onCreateShelfSelected,
+            onDismiss = viewModel::onCreateSheetDismissed,
+            onCreateZone = viewModel::createZone,
+            onCreateShelf = viewModel::createShelf,
+            onCreateRow = viewModel::createRow,
+            onCreateBox = viewModel::createBox
         )
     }
 

@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.activity.compose.BackHandler
@@ -185,6 +189,11 @@ fun HomeScreen(
         else -> stringResource(R.string.app_name)
     }
 
+    // Create warehouse ViewModel here so the TopAppBar action can reference it
+    val warehouseVm: WarehouseListViewModel? = if (canViewWarehouse && currentUser != null) {
+        viewModel(factory = WarehouseListViewModel.Factory(WarehouseRepository(), currentUser))
+    } else null
+
     MainScaffold(
         title = screenTitle,
         user = uiState.user,
@@ -193,7 +202,14 @@ fun HomeScreen(
         onLogout = { viewModel.onLogoutConfirmed() },
         showPersonnel = canViewPersonnel,
         showParts = canViewParts,
-        showWarehouse = canViewWarehouse
+        showWarehouse = canViewWarehouse,
+        actions = {
+            if (currentScreen == DrawerScreen.WAREHOUSE && warehouseVm != null) {
+                IconButton(onClick = warehouseVm::onCreateClicked) {
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.warehouse_create_title))
+                }
+            }
+        }
     ) { contentModifier ->
         when (currentScreen) {
             DrawerScreen.HOME -> HomeDashboard(uiState = uiState, modifier = contentModifier)
@@ -237,13 +253,9 @@ fun HomeScreen(
                 }
             }
             DrawerScreen.WAREHOUSE -> {
-                if (canViewWarehouse && currentUser != null) {
-                    val repo = WarehouseRepository()
-                    val listVm: WarehouseListViewModel = viewModel(
-                        factory = WarehouseListViewModel.Factory(repo, currentUser)
-                    )
+                if (warehouseVm != null) {
                     WarehouseListScreen(
-                        viewModel = listVm,
+                        viewModel = warehouseVm,
                         onNavigateToDetail = { boxId ->
                             selectedBoxId = boxId
                             warehouseSubScreen = WarehouseSubScreenType.DETAIL

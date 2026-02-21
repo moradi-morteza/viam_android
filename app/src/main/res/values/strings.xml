@@ -110,4 +110,35 @@
     <string name="transaction_description">توضیحات</string>
     <string name="transaction_reference">مرجع</string>
     <string name="transaction_balance_after">موجودی بعد</string>
+
+    <!-- Transaction Form -->
+    <string name="transaction_new">تراکنش جدید</string>
+    <string name="transaction_type_label">نوع تراکنش</string>
+    <string name="transaction_amount_label">مقدار</string>
+    <string name="transaction_new_quantity_label">موجودی جدید</string>
+    <string name="transaction_current_stock">موجودی فعلی</string>
+    <string name="transaction_adjust_hint">موجودی جعبه به این مقدار تنظیم می‌شود</string>
+    <string name="transaction_date_label">تاریخ و ساعت تراکنش</string>
+    <string name="transaction_date_hint">(اختیاری)</string>
+    <string name="transaction_reference_hint">مثال: فاکتور ۱۲۳</string>
+    <string name="transaction_description_hint">توضیحات اختیاری</string>
+    <string name="transaction_saving">در حال ثبت…</string>
+    <string name="transaction_error">خطا در ثبت تراکنش</string>
+    <string name="transaction_success">تراکنش با موفقیت ثبت شد</string>
+    <string name="transaction_diff_preview">تغییر</string>
+
+    <!-- Warehouse Create -->
+    <string name="warehouse_create_title">ایجاد مورد جدید</string>
+    <string name="warehouse_create_success">با موفقیت ایجاد شد</string>
+    <string name="warehouse_box_code_short">جعبه</string>
+    <string name="warehouse_box_code_hint">مثال: BOX-001</string>
+    <string name="warehouse_select_zone">انتخاب ناحیه…</string>
+    <string name="warehouse_select_shelf">انتخاب قفسه…</string>
+    <string name="warehouse_select_row">انتخاب ردیف…</string>
+    <string name="form_name">نام</string>
+    <string name="loading">در حال بارگذاری…</string>
+
+    <!-- Part Picker -->
+    <string name="part_picker_title">انتخاب قطعه</string>
+    <string name="part_picker_hint">انتخاب قطعه (اختیاری)…</string>
 </resources>

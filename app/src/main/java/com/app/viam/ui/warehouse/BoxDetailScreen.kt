@@ -15,11 +15,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,9 +68,38 @@ fun BoxDetailScreen(
         }
     }
 
+    val successMsg = stringResource(R.string.transaction_success)
+    LaunchedEffect(uiState.transactionSuccess) {
+        if (uiState.transactionSuccess) {
+            snackbarHostState.showSnackbar(successMsg)
+            viewModel.onTransactionSuccessConsumed()
+        }
+    }
+
+    // Transaction form sheet
+    val currentBox = uiState.box
+    if (uiState.showTransactionSheet && currentBox != null) {
+        TransactionFormSheet(
+            currentQuantity = currentBox.quantity,
+            isLoading = uiState.isSubmittingTransaction,
+            error = uiState.transactionError,
+            onDismiss = { viewModel.onTransactionSheetDismissed() },
+            onSubmit = { req -> viewModel.submitTransaction(req) }
+        )
+    }
+
     Scaffold(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            if (uiState.box != null) {
+                ExtendedFloatingActionButton(
+                    onClick = { viewModel.onAddTransactionClicked() },
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    text = { Text(stringResource(R.string.transaction_new)) }
+                )
+            }
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -128,7 +159,7 @@ fun BoxDetailScreen(
                         .fillMaxSize()
                         .padding(innerPadding)
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Box info card

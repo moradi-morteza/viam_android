@@ -1,8 +1,16 @@
 package com.app.viam.data.repository
 
 import com.app.viam.data.model.Box
+import com.app.viam.data.model.BoxRequest
+import com.app.viam.data.model.BoxTransaction
 import com.app.viam.data.model.PaginatedBoxes
+import com.app.viam.data.model.Row
+import com.app.viam.data.model.RowRequest
+import com.app.viam.data.model.Shelf
+import com.app.viam.data.model.ShelfRequest
+import com.app.viam.data.model.TransactionRequest
 import com.app.viam.data.model.Zone
+import com.app.viam.data.model.ZoneRequest
 import com.app.viam.data.remote.NetworkModule
 import java.io.IOException
 
@@ -51,6 +59,113 @@ class WarehouseRepository {
         } catch (e: Exception) {
             AuthResult.Error("خطای غیرمنتظره رخ داد")
         }
+    }
+
+    suspend fun getZones(): AuthResult<List<Zone>> {
+        return try {
+            val response = api.getZones()
+            if (response.isSuccessful) AuthResult.Success(response.body()!!)
+            else AuthResult.Error("خطا در دریافت ناحیه‌ها")
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun createZone(request: ZoneRequest): AuthResult<Zone> {
+        return try {
+            val response = api.createZone(request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در ایجاد ناحیه")
+                else -> AuthResult.Error("خطا در ایجاد ناحیه")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun getShelves(zoneId: Int? = null): AuthResult<List<Shelf>> {
+        return try {
+            val response = api.getShelves(zoneId)
+            if (response.isSuccessful) AuthResult.Success(response.body()!!)
+            else AuthResult.Error("خطا در دریافت قفسه‌ها")
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun createShelf(request: ShelfRequest): AuthResult<Shelf> {
+        return try {
+            val response = api.createShelf(request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در ایجاد قفسه")
+                else -> AuthResult.Error("خطا در ایجاد قفسه")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun getRows(shelfId: Int? = null): AuthResult<List<Row>> {
+        return try {
+            val response = api.getRows(shelfId)
+            if (response.isSuccessful) AuthResult.Success(response.body()!!)
+            else AuthResult.Error("خطا در دریافت ردیف‌ها")
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun createRow(request: RowRequest): AuthResult<Row> {
+        return try {
+            val response = api.createRow(request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در ایجاد ردیف")
+                else -> AuthResult.Error("خطا در ایجاد ردیف")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun createBox(request: BoxRequest): AuthResult<Box> {
+        return try {
+            val response = api.createBox(request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در ایجاد جعبه")
+                else -> AuthResult.Error("خطا در ایجاد جعبه")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun createTransaction(
+        boxId: Int,
+        request: TransactionRequest
+    ): AuthResult<BoxTransaction> {
+        return try {
+            val response = api.createTransaction(boxId, request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> {
+                    val msg = response.errorBody()?.string()
+                        ?.let { parseErrorMessage(it) }
+                        ?: "خطا در ثبت تراکنش"
+                    AuthResult.Error(msg)
+                }
+                response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
+                else -> AuthResult.Error("خطا در ثبت تراکنش")
+            }
+        } catch (e: IOException) {
+            AuthResult.NetworkError
+        } catch (e: Exception) {
+            AuthResult.Error("خطای غیرمنتظره رخ داد")
+        }
+    }
+
+    private fun parseErrorMessage(json: String?): String? {
+        if (json == null) return null
+        return try {
+            val obj = com.google.gson.JsonParser.parseString(json).asJsonObject
+            obj.get("message")?.asString
+        } catch (_: Exception) { null }
     }
 
     suspend fun getWarehouseTree(): AuthResult<List<Zone>> {

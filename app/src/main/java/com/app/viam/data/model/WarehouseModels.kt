@@ -52,6 +52,39 @@ data class BoxTransaction(
     val user: User? = null
 )
 
+data class ZoneRequest(
+    val name: String,
+    val description: String? = null
+)
+
+data class ShelfRequest(
+    @SerializedName("zone_id") val zoneId: Int,
+    val name: String,
+    val description: String? = null
+)
+
+data class RowRequest(
+    @SerializedName("shelf_id") val shelfId: Int,
+    val name: String,
+    val description: String? = null
+)
+
+data class BoxRequest(
+    @SerializedName("row_id") val rowId: Int,
+    val code: String,
+    @SerializedName("part_id") val partId: Int? = null,
+    val description: String? = null
+)
+
+data class TransactionRequest(
+    val type: String,           // "IN" | "OUT" | "ADJUST"
+    val amount: Int? = null,    // required for IN/OUT
+    @SerializedName("new_quantity") val newQuantity: Int? = null, // required for ADJUST
+    val reference: String? = null,
+    val description: String? = null,
+    @SerializedName("transaction_date") val transactionDate: String? = null
+)
+
 data class PaginatedBoxes(
     val data: List<Box>,
     @SerializedName("current_page") val currentPage: Int,

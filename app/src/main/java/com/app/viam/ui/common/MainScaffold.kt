@@ -62,6 +62,7 @@ fun MainScaffold(
     showPersonnel: Boolean = false,
     showParts: Boolean = false,
     showWarehouse: Boolean = false,
+    actions: @Composable () -> Unit = {},
     content: @Composable (Modifier) -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -230,7 +231,8 @@ fun MainScaffold(
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Filled.Menu, contentDescription = "منو")
                         }
-                    }
+                    },
+                    actions = { actions() }
                 )
             }
         ) { innerPadding ->
