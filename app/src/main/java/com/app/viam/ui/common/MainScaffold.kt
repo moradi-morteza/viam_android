@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Warehouse
 import androidx.compose.material.icons.filled.AccountTree
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
@@ -47,7 +48,7 @@ import com.app.viam.R
 import com.app.viam.data.model.User
 import kotlinx.coroutines.launch
 
-enum class DrawerScreen { HOME, PROFILE, PERSONNEL, PARTS, WAREHOUSE, WAREHOUSE_STRUCTURE, DEVELOPER }
+enum class DrawerScreen { HOME, PROFILE, PERSONNEL, PARTS, PART_CATEGORIES, WAREHOUSE, WAREHOUSE_STRUCTURE, DEVELOPER }
 
 // Shape for drawer items — slightly rounded rectangle
 private val DrawerItemShape = RoundedCornerShape(6.dp)
@@ -62,6 +63,7 @@ fun MainScaffold(
     onLogout: () -> Unit,
     showPersonnel: Boolean = false,
     showParts: Boolean = false,
+    showPartCategories: Boolean = false,
     showWarehouse: Boolean = false,
     showWarehouseStructure: Boolean = false,
     actions: @Composable () -> Unit = {},
@@ -161,6 +163,20 @@ fun MainScaffold(
                         onClick = {
                             scope.launch { drawerState.close() }
                             onNavigate(DrawerScreen.PARTS)
+                        },
+                        shape = DrawerItemShape,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                    )
+                }
+
+                if (showPartCategories) {
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Filled.Category, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_part_categories)) },
+                        selected = currentScreen == DrawerScreen.PART_CATEGORIES,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            onNavigate(DrawerScreen.PART_CATEGORIES)
                         },
                         shape = DrawerItemShape,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)

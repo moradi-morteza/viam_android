@@ -9,6 +9,7 @@ import com.app.viam.data.model.PaginatedBoxes
 import com.app.viam.data.model.PaginatedParts
 import com.app.viam.data.model.Part
 import com.app.viam.data.model.PartCategory
+import com.app.viam.data.model.PartCategoryRequest
 import com.app.viam.data.model.PartRequest
 import com.app.viam.data.model.UpdateStaffRequest
 import com.app.viam.data.model.User
@@ -91,6 +92,22 @@ interface ApiService {
 
     @GET("part-categories/all")
     suspend fun getPartCategoriesAll(): Response<List<PartCategory>>
+
+    @GET("part-categories")
+    suspend fun getPartCategories(
+        @Query("search") search: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 30
+    ): Response<Map<String, Any>>
+
+    @POST("part-categories")
+    suspend fun createPartCategory(@Body request: PartCategoryRequest): Response<PartCategory>
+
+    @PUT("part-categories/{id}")
+    suspend fun updatePartCategory(@Path("id") id: Int, @Body request: PartCategoryRequest): Response<PartCategory>
+
+    @DELETE("part-categories/{id}")
+    suspend fun deletePartCategory(@Path("id") id: Int): Response<Map<String, String>>
 
     // --- Warehouse ---
 

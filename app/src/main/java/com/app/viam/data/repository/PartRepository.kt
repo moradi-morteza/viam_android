@@ -4,6 +4,7 @@ import com.app.viam.data.model.ApiError
 import com.app.viam.data.model.PaginatedParts
 import com.app.viam.data.model.Part
 import com.app.viam.data.model.PartCategory
+import com.app.viam.data.model.PartCategoryRequest
 import com.app.viam.data.model.PartRequest
 import com.app.viam.data.remote.NetworkModule
 import com.google.gson.Gson
@@ -100,6 +101,62 @@ class PartRepository {
                 response.isSuccessful -> AuthResult.Success(response.body()!!)
                 response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
                 else -> AuthResult.Error("خطا در دریافت دسته‌بندی‌ها")
+            }
+        } catch (e: IOException) {
+            AuthResult.NetworkError
+        } catch (e: Exception) {
+            AuthResult.Error("خطای غیرمنتظره رخ داد")
+        }
+    }
+
+    suspend fun createPartCategory(request: PartCategoryRequest): AuthResult<PartCategory> {
+        return try {
+            val response = api.createPartCategory(request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> {
+                    val apiError = parseError(response.errorBody()?.string())
+                    AuthResult.Error(apiError?.message ?: "اطلاعات وارد شده معتبر نیست")
+                }
+                response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
+                else -> AuthResult.Error("خطا در ایجاد دسته‌بندی")
+            }
+        } catch (e: IOException) {
+            AuthResult.NetworkError
+        } catch (e: Exception) {
+            AuthResult.Error("خطای غیرمنتظره رخ داد")
+        }
+    }
+
+    suspend fun updatePartCategory(id: Int, request: PartCategoryRequest): AuthResult<PartCategory> {
+        return try {
+            val response = api.updatePartCategory(id, request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> {
+                    val apiError = parseError(response.errorBody()?.string())
+                    AuthResult.Error(apiError?.message ?: "اطلاعات وارد شده معتبر نیست")
+                }
+                response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
+                response.code() == 404 -> AuthResult.Error("دسته‌بندی یافت نشد")
+                else -> AuthResult.Error("خطا در ویرایش دسته‌بندی")
+            }
+        } catch (e: IOException) {
+            AuthResult.NetworkError
+        } catch (e: Exception) {
+            AuthResult.Error("خطای غیرمنتظره رخ داد")
+        }
+    }
+
+    suspend fun deletePartCategory(id: Int): AuthResult<Unit> {
+        return try {
+            val response = api.deletePartCategory(id)
+            when {
+                response.isSuccessful -> AuthResult.Success(Unit)
+                response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
+                response.code() == 404 -> AuthResult.Error("دسته‌بندی یافت نشد")
+                response.code() == 422 -> AuthResult.Error("این دسته‌بندی دارای قطعه است و قابل حذف نیست")
+                else -> AuthResult.Error("خطا در حذف دسته‌بندی")
             }
         } catch (e: IOException) {
             AuthResult.NetworkError

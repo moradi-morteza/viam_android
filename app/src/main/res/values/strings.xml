@@ -78,6 +78,18 @@
     <string name="parts_total_stock">موجودی</string>
     <string name="parts_category">دسته‌بندی</string>
     <string name="parts_category_none">بدون دسته‌بندی</string>
+
+    <!-- Part Categories Screen -->
+    <string name="nav_part_categories">دسته‌بندی قطعات</string>
+    <string name="part_category_title">دسته‌بندی قطعات</string>
+    <string name="part_category_empty">دسته‌بندی‌ای یافت نشد</string>
+    <string name="part_category_create">افزودن دسته‌بندی</string>
+    <string name="part_category_edit">ویرایش دسته‌بندی</string>
+    <string name="part_category_delete_title">حذف دسته‌بندی</string>
+    <string name="part_category_delete_message">آیا مطمئن هستید؟ این عمل قابل بازگشت نیست.</string>
+    <string name="part_category_name">نام دسته‌بندی</string>
+    <string name="part_category_description">توضیحات</string>
+    <string name="part_category_parts_count">قطعه</string>
     <string name="refresh">بارگذاری مجدد</string>
 
     <!-- Warehouse Screen -->

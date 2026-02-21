@@ -29,6 +29,8 @@ import com.app.viam.ui.common.DrawerScreen
 import com.app.viam.ui.common.MainScaffold
 import com.app.viam.ui.developer.DeveloperScreen
 import com.app.viam.ui.developer.DeveloperViewModel
+import com.app.viam.ui.parts.PartCategoryScreen
+import com.app.viam.ui.parts.PartCategoryViewModel
 import com.app.viam.ui.parts.PartFormScreen
 import com.app.viam.ui.parts.PartFormViewModel
 import com.app.viam.ui.parts.PartListScreen
@@ -142,6 +144,10 @@ fun HomeScreen(
             canCreateRows || canEditRows || canDeleteRows
     val canDeleteBoxes = isAdmin || currentUser?.hasPermission("delete-boxes") == true
     val canPerformTransactions = isAdmin || currentUser?.hasPermission("perform-transactions") == true
+    val canViewPartCategories = isAdmin ||
+            currentUser?.hasPermission("create-part-categories") == true ||
+            currentUser?.hasPermission("edit-part-categories") == true ||
+            currentUser?.hasPermission("delete-part-categories") == true
 
     // Sub-form screens (have their own TopAppBar with back)
     val isInPersonnelForm = currentScreen == DrawerScreen.PERSONNEL &&
@@ -219,6 +225,7 @@ fun HomeScreen(
         currentScreen == DrawerScreen.DEVELOPER -> stringResource(R.string.developer_title)
         currentScreen == DrawerScreen.PERSONNEL -> stringResource(R.string.personnel_title)
         currentScreen == DrawerScreen.PARTS -> stringResource(R.string.parts_title)
+        currentScreen == DrawerScreen.PART_CATEGORIES -> stringResource(R.string.part_category_title)
         currentScreen == DrawerScreen.WAREHOUSE -> stringResource(R.string.warehouse_title)
         currentScreen == DrawerScreen.WAREHOUSE_STRUCTURE -> stringResource(R.string.nav_warehouse_structure)
         else -> stringResource(R.string.app_name)
@@ -237,6 +244,7 @@ fun HomeScreen(
         onLogout = { viewModel.onLogoutConfirmed() },
         showPersonnel = canViewPersonnel,
         showParts = canViewParts,
+        showPartCategories = canViewPartCategories,
         showWarehouse = canViewWarehouse,
         showWarehouseStructure = canManageStructure,
         actions = {
@@ -296,6 +304,15 @@ fun HomeScreen(
                         },
                         modifier = contentModifier
                     )
+                }
+            }
+            DrawerScreen.PART_CATEGORIES -> {
+                if (canViewPartCategories && currentUser != null) {
+                    val repo = PartRepository()
+                    val catVm: PartCategoryViewModel = viewModel(
+                        factory = PartCategoryViewModel.Factory(repo, currentUser)
+                    )
+                    PartCategoryScreen(viewModel = catVm, modifier = contentModifier)
                 }
             }
             DrawerScreen.WAREHOUSE -> {

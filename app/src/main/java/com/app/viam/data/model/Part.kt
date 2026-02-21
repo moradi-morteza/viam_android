@@ -5,6 +5,12 @@ import com.google.gson.annotations.SerializedName
 data class PartCategory(
     val id: Int,
     val name: String,
+    val description: String?,
+    @SerializedName("parts_count") val partsCount: Int = 0
+)
+
+data class PartCategoryRequest(
+    val name: String,
     val description: String?
 )
 
