@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
@@ -121,7 +122,7 @@ fun ScanTransactScreen(
                 title = { Text(stringResource(R.string.quick_transaction)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowForward, contentDescription = stringResource(R.string.back))
+                        Icon(Icons.Filled.ArrowForwardIos, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
