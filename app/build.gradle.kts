@@ -24,7 +24,8 @@ android {
         }
         release {
             buildConfigField("String", "BASE_URL", "\"https://viam.liara.run/api/\"")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

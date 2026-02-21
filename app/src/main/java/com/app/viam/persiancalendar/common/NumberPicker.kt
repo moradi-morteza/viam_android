@@ -22,7 +22,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -256,13 +255,9 @@ private fun Label(text: String, modifier: Modifier) {
         BasicText(
             text = text,
             color = { contentColor },
-            style = LocalTextStyle.current,
+            style = LocalTextStyle.current.copy(fontSize = 20.sp),
             maxLines = 1,
             softWrap = false,
-            autoSize = TextAutoSize.StepBased(
-                minFontSize = MaterialTheme.typography.bodySmall.fontSize,
-                maxFontSize =22.sp,
-            )
         )
     }
 }

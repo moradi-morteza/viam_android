@@ -1,21 +1,37 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ── Retrofit + OkHttp ──
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes *Annotation*
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ── Gson: keep all data model classes (fields used via reflection) ──
+-keep class com.app.viam.data.model.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ── Gson internals ──
+-dontwarn com.google.gson.**
+-keep class com.google.gson.** { *; }
+-keep class sun.misc.Unsafe { *; }
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ── Keep @SerializedName annotations so Gson mapping works ──
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# ── CameraX / ML Kit (QR scanning) ──
+-dontwarn com.google.mlkit.**
+-keep class com.google.mlkit.** { *; }
+
+# ── Passport / OAuth ──
+-dontwarn org.conscrypt.**
+
+# ── Kotlin serialization (if used) ──
+-keepclassmembers class kotlinx.serialization.** { *; }
+
+# ── Preserve line numbers for crash reports ──
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
