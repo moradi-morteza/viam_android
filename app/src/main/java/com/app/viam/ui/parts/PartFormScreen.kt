@@ -1,6 +1,5 @@
 package com.app.viam.ui.parts
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,17 +12,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -178,6 +178,7 @@ fun PartFormScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CategoryDropdown(
     categories: List<PartCategory>,
@@ -187,10 +188,18 @@ private fun CategoryDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedName = categories.firstOrNull { it.id == selectedId }?.name
-        ?: stringResource(R.string.parts_category_none)
+    val selectedName = if (selectedId == null) {
+        stringResource(R.string.parts_category_none)
+    } else {
+        categories.firstOrNull { it.id == selectedId }?.name
+            ?: stringResource(R.string.parts_category_none)
+    }
 
-    Box(modifier = modifier) {
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (!isLoading) expanded = it },
+        modifier = modifier
+    ) {
         OutlinedTextField(
             value = if (isLoading) stringResource(R.string.loading) else selectedName,
             onValueChange = {},
@@ -200,19 +209,24 @@ private fun CategoryDropdown(
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    IconButton(onClick = { expanded = true }) {
-                        Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-                    }
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
         )
-        DropdownMenu(
+        ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.parts_category_none)) },
+                text = {
+                    Text(
+                        stringResource(R.string.parts_category_none),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 onClick = {
                     onSelect(null)
                     expanded = false
