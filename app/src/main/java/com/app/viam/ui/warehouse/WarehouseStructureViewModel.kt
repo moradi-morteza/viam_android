@@ -116,7 +116,7 @@ class WarehouseStructureViewModel(
     fun deleteZone(zone: Zone) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, dialogError = null) }
-            handleSaveResult(repository.deleteZone(zone.id))
+            handleSaveResult(repository.deleteZone(zone.id)) { removeZoneLocally(zone.id) }
         }
     }
 
@@ -140,7 +140,7 @@ class WarehouseStructureViewModel(
     fun deleteShelf(shelf: Shelf) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, dialogError = null) }
-            handleSaveResult(repository.deleteShelf(shelf.id))
+            handleSaveResult(repository.deleteShelf(shelf.id)) { removeShelfLocally(shelf.id) }
         }
     }
 
@@ -164,7 +164,7 @@ class WarehouseStructureViewModel(
     fun deleteRow(row: Row) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, dialogError = null) }
-            handleSaveResult(repository.deleteRow(row.id))
+            handleSaveResult(repository.deleteRow(row.id)) { removeRowLocally(row.id) }
         }
     }
 
@@ -184,11 +184,12 @@ class WarehouseStructureViewModel(
 
     // ── Private helpers ──────────────────────────────────────────────────────
 
-    private fun <T> handleSaveResult(result: AuthResult<T>) {
+    private fun <T> handleSaveResult(result: AuthResult<T>, onSuccess: (() -> Unit)? = null) {
         when (result) {
             is AuthResult.Success -> {
+                onSuccess?.invoke()
                 _uiState.update { it.copy(isSaving = false, dialog = null, dialogError = null) }
-                load() // reload the full tree
+                load() // reload full tree from server (cache now cleared by backend)
             }
             is AuthResult.Error -> _uiState.update {
                 it.copy(isSaving = false, dialogError = result.message)
@@ -197,6 +198,24 @@ class WarehouseStructureViewModel(
                 it.copy(isSaving = false, dialogError = "اتصال به اینترنت برقرار نیست")
             }
         }
+    }
+
+    // Immediately remove item from local state so UI updates before server responds
+    private fun removeZoneLocally(zoneId: Int) =
+        _uiState.update { it.copy(zones = it.zones.filter { z -> z.id != zoneId }) }
+
+    private fun removeShelfLocally(shelfId: Int) = _uiState.update {
+        it.copy(zones = it.zones.map { z ->
+            z.copy(shelves = z.shelves?.filter { s -> s.id != shelfId })
+        })
+    }
+
+    private fun removeRowLocally(rowId: Int) = _uiState.update {
+        it.copy(zones = it.zones.map { z ->
+            z.copy(shelves = z.shelves?.map { s ->
+                s.copy(rows = s.rows?.filter { r -> r.id != rowId })
+            })
+        })
     }
 
     class Factory(private val repository: WarehouseRepository) : ViewModelProvider.Factory {

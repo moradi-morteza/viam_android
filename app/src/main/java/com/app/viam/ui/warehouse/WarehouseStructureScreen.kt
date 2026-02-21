@@ -73,7 +73,15 @@ import com.app.viam.data.model.Zone
 @Composable
 fun WarehouseStructureScreen(
     viewModel: WarehouseStructureViewModel,
-    canManage: Boolean,
+    canCreateZones: Boolean,
+    canEditZones: Boolean,
+    canDeleteZones: Boolean,
+    canCreateShelves: Boolean,
+    canEditShelves: Boolean,
+    canDeleteShelves: Boolean,
+    canCreateRows: Boolean,
+    canEditRows: Boolean,
+    canDeleteRows: Boolean,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -153,7 +161,7 @@ fun WarehouseStructureScreen(
     Scaffold(
         modifier = modifier,
         floatingActionButton = {
-            if (canManage) {
+            if (canCreateZones) {
                 FloatingActionButton(onClick = { viewModel.openDialog(StructureDialog.AddZone) }) {
                     Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.structure_add_zone))
                 }
@@ -197,7 +205,14 @@ fun WarehouseStructureScreen(
                                 zone = zone,
                                 isExpanded = zone.id in uiState.expandedZoneIds,
                                 expandedShelfIds = uiState.expandedShelfIds,
-                                canManage = canManage,
+                                canEditZone = canEditZones,
+                                canDeleteZone = canDeleteZones,
+                                canCreateShelf = canCreateShelves,
+                                canEditShelf = canEditShelves,
+                                canDeleteShelf = canDeleteShelves,
+                                canCreateRow = canCreateRows,
+                                canEditRow = canEditRows,
+                                canDeleteRow = canDeleteRows,
                                 onToggle = { viewModel.toggleZone(zone.id) },
                                 onToggleShelf = { viewModel.toggleShelf(it) },
                                 onAddShelf = { viewModel.openDialog(StructureDialog.AddShelf(zone)) },
@@ -225,7 +240,14 @@ private fun ZoneCard(
     zone: Zone,
     isExpanded: Boolean,
     expandedShelfIds: Set<Int>,
-    canManage: Boolean,
+    canEditZone: Boolean,
+    canDeleteZone: Boolean,
+    canCreateShelf: Boolean,
+    canEditShelf: Boolean,
+    canDeleteShelf: Boolean,
+    canCreateRow: Boolean,
+    canEditRow: Boolean,
+    canDeleteRow: Boolean,
     onToggle: () -> Unit,
     onToggleShelf: (Int) -> Unit,
     onAddShelf: () -> Unit,
@@ -290,9 +312,11 @@ private fun ZoneCard(
                     Spacer(Modifier.width(4.dp))
                 }
                 // ⋮ menu on right
-                if (canManage) {
+                if (canEditZone || canDeleteZone || canCreateShelf) {
                     OverflowMenu(
-                        addLabel = stringResource(R.string.structure_add_shelf),
+                        addLabel = if (canCreateShelf) stringResource(R.string.structure_add_shelf) else null,
+                        canEdit = canEditZone,
+                        canDelete = canDeleteZone,
                         onAdd = onAddShelf,
                         onEdit = onEditZone,
                         onDelete = onDeleteZone
@@ -308,6 +332,7 @@ private fun ZoneCard(
             ) {
                 Column(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                 ) {
                     val shelves = zone.shelves.orEmpty()
@@ -323,7 +348,11 @@ private fun ZoneCard(
                             ShelfRow(
                                 shelf = shelf,
                                 isExpanded = shelf.id in expandedShelfIds,
-                                canManage = canManage,
+                                canEditShelf = canEditShelf,
+                                canDeleteShelf = canDeleteShelf,
+                                canCreateRow = canCreateRow,
+                                canEditRow = canEditRow,
+                                canDeleteRow = canDeleteRow,
                                 onToggle = { onToggleShelf(shelf.id) },
                                 onEdit = { onEditShelf(shelf) },
                                 onDelete = { onDeleteShelf(shelf) },
@@ -333,7 +362,7 @@ private fun ZoneCard(
                             )
                         }
                     }
-                    if (canManage) {
+                    if (canCreateShelf) {
                         TextButton(
                             onClick = onAddShelf,
                             modifier = Modifier.padding(start = 36.dp, bottom = 6.dp, top = 2.dp)
@@ -358,7 +387,11 @@ private fun ZoneCard(
 private fun ShelfRow(
     shelf: Shelf,
     isExpanded: Boolean,
-    canManage: Boolean,
+    canEditShelf: Boolean,
+    canDeleteShelf: Boolean,
+    canCreateRow: Boolean,
+    canEditRow: Boolean,
+    canDeleteRow: Boolean,
     onToggle: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -413,9 +446,11 @@ private fun ShelfRow(
                 Spacer(Modifier.width(4.dp))
             }
             // ⋮ menu on right
-            if (canManage) {
+            if (canEditShelf || canDeleteShelf || canCreateRow) {
                 OverflowMenu(
-                    addLabel = stringResource(R.string.structure_add_row),
+                    addLabel = if (canCreateRow) stringResource(R.string.structure_add_row) else null,
+                    canEdit = canEditShelf,
+                    canDelete = canDeleteShelf,
                     onAdd = onAddRow,
                     onEdit = onEdit,
                     onDelete = onDelete
@@ -441,13 +476,14 @@ private fun ShelfRow(
                     rows.forEach { row ->
                         RowItem(
                             row = row,
-                            canManage = canManage,
+                            canEditRow = canEditRow,
+                            canDeleteRow = canDeleteRow,
                             onEdit = { onEditRow(row) },
                             onDelete = { onDeleteRow(row) }
                         )
                     }
                 }
-                if (canManage) {
+                if (canCreateRow) {
                     TextButton(
                         onClick = onAddRow,
                         modifier = Modifier.padding(start = 52.dp, bottom = 6.dp, top = 2.dp)
@@ -470,7 +506,8 @@ private fun ShelfRow(
 @Composable
 private fun RowItem(
     row: Row,
-    canManage: Boolean,
+    canEditRow: Boolean,
+    canDeleteRow: Boolean,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -518,9 +555,11 @@ private fun RowItem(
             Spacer(Modifier.width(4.dp))
         }
         // ⋮ menu on right (no "Add" sub-item for rows)
-        if (canManage) {
+        if (canEditRow || canDeleteRow) {
             OverflowMenu(
                 addLabel = null,
+                canEdit = canEditRow,
+                canDelete = canDeleteRow,
                 onAdd = {},
                 onEdit = onEdit,
                 onDelete = onDelete
@@ -534,6 +573,8 @@ private fun RowItem(
 @Composable
 private fun OverflowMenu(
     addLabel: String?,
+    canEdit: Boolean,
+    canDelete: Boolean,
     onAdd: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -559,35 +600,39 @@ private fun OverflowMenu(
                     onClick = { expanded = false; onAdd() }
                 )
             }
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.edit)) },
-                leadingIcon = {
-                    Icon(
-                        Icons.Filled.Edit,
-                        null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                },
-                onClick = { expanded = false; onEdit() }
-            )
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        stringResource(R.string.delete),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        Icons.Filled.Delete,
-                        null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                },
-                onClick = { expanded = false; onDelete() }
-            )
+            if (canEdit) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.edit)) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Filled.Edit,
+                            null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    onClick = { expanded = false; onEdit() }
+                )
+            }
+            if (canDelete) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(R.string.delete),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Filled.Delete,
+                            null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    onClick = { expanded = false; onDelete() }
+                )
+            }
         }
     }
 }

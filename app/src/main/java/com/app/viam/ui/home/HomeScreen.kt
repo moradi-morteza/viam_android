@@ -121,8 +121,19 @@ fun HomeScreen(
             currentUser?.hasPermission("manage-parts") == true
     val canViewWarehouse = currentUser?.isAdmin() == true ||
             currentUser?.hasPermission("view-warehouse") == true
-    val canManageStructure = currentUser?.isAdmin() == true ||
-            currentUser?.hasPermission("manage-warehouse-structure") == true
+    val isAdmin = currentUser?.isAdmin() == true
+    val canCreateZones = isAdmin || currentUser?.hasPermission("create-zones") == true
+    val canEditZones = isAdmin || currentUser?.hasPermission("edit-zones") == true
+    val canDeleteZones = isAdmin || currentUser?.hasPermission("delete-zones") == true
+    val canCreateShelves = isAdmin || currentUser?.hasPermission("create-shelves") == true
+    val canEditShelves = isAdmin || currentUser?.hasPermission("edit-shelves") == true
+    val canDeleteShelves = isAdmin || currentUser?.hasPermission("delete-shelves") == true
+    val canCreateRows = isAdmin || currentUser?.hasPermission("create-rows") == true
+    val canEditRows = isAdmin || currentUser?.hasPermission("edit-rows") == true
+    val canDeleteRows = isAdmin || currentUser?.hasPermission("delete-rows") == true
+    val canManageStructure = canCreateZones || canEditZones || canDeleteZones ||
+            canCreateShelves || canEditShelves || canDeleteShelves ||
+            canCreateRows || canEditRows || canDeleteRows
 
     // Sub-form screens (have their own TopAppBar with back)
     val isInPersonnelForm = currentScreen == DrawerScreen.PERSONNEL &&
@@ -273,7 +284,15 @@ fun HomeScreen(
                 )
                 WarehouseStructureScreen(
                     viewModel = structureVm,
-                    canManage = canManageStructure,
+                    canCreateZones = canCreateZones,
+                    canEditZones = canEditZones,
+                    canDeleteZones = canDeleteZones,
+                    canCreateShelves = canCreateShelves,
+                    canEditShelves = canEditShelves,
+                    canDeleteShelves = canDeleteShelves,
+                    canCreateRows = canCreateRows,
+                    canEditRows = canEditRows,
+                    canDeleteRows = canDeleteRows,
                     modifier = contentModifier
                 )
             }

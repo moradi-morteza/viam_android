@@ -18,7 +18,9 @@
       "Bash(python3:*)",
       "Bash(npm install:*)",
       "Bash(./gradlew:*)",
-      "Bash(./gradlew dependencies:*)"
+      "Bash(./gradlew dependencies:*)",
+      "Bash(php artisan route:list:*)",
+      "Bash(cat:*)"
     ]
   }
 }
