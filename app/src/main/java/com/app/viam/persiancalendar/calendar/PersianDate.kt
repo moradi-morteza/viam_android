@@ -1,0 +1,41 @@
+package com.app.viam.persiancalendar.calendar
+
+import com.app.viam.persiancalendar.calendar.persian.LookupTableConverter
+import com.app.viam.persiancalendar.calendar.persian.OldEraConverter
+import com.app.viam.persiancalendar.calendar.util.TwelveMonthsYear.monthStartOfMonthsDistance
+import com.app.viam.persiancalendar.calendar.util.TwelveMonthsYear.monthsDistanceTo
+import com.app.viam.persiancalendar.calendar.util.jdnFromPersian
+import com.app.viam.persiancalendar.calendar.util.persianFromJdn
+
+class PersianDate : AbstractDate, YearMonthDate<PersianDate> {
+    constructor(year: Int, month: Int, dayOfMonth: Int) : super(year, month, dayOfMonth)
+    constructor(date: AbstractDate) : super(date)
+    constructor(jdn: Long) : super(jdn)
+
+    // Converters
+    override fun toJdn(): Long {
+        var result = LookupTableConverter.toJdn(year, month, dayOfMonth)
+        if (result == -1L) result = OldEraConverter.toJdn(year, month, dayOfMonth)
+        if (result == -1L) result = jdnFromPersian(year, month, dayOfMonth)
+        return result
+    }
+
+    override fun fromJdn(jdn: Long): DateTriplet =
+        LookupTableConverter.fromJdn(jdn) ?: OldEraConverter.fromJdn(jdn) ?: persianFromJdn(jdn)
+
+    override fun monthStartOfMonthsDistance(monthsDistance: Int): PersianDate =
+        monthStartOfMonthsDistance(this, monthsDistance, ::PersianDate)
+
+    override fun monthsDistanceTo(date: PersianDate): Int = monthsDistanceTo(this, date)
+
+    override fun toString(): String = "PersianDate($year, $month, $dayOfMonth)"
+
+    companion object {
+        // First six months have length of 31, next 5 months are 30 and the last month is 29 and in leap years are 30
+        private val daysToMonth =
+            intArrayOf(0, 31, 62, 93, 124, 155, 186, 216, 246, 276, 306, 336, 366)
+
+        internal fun monthFromDaysCount(days: Int): Int = daysToMonth.indexOfFirst { it >= days }
+        internal fun daysInPreviousMonths(month: Int): Int = daysToMonth[month - 1]
+    }
+}
