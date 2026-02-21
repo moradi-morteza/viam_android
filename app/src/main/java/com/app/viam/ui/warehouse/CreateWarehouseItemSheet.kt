@@ -74,6 +74,7 @@ enum class CreateItemType {
  * @param error                Server error to display.
  * @param onZoneSelected       Called when user picks a zone — ViewModel loads shelves.
  * @param onShelfSelected      Called when user picks a shelf — ViewModel loads rows.
+ * @param onClearCascading     Called when type chip changes — ViewModel clears stale shelves/rows.
  * @param onDismiss            Called on close without submit.
  * @param onCreateZone         name, description
  * @param onCreateShelf        zoneId, name, description
@@ -93,6 +94,7 @@ fun CreateWarehouseItemSheet(
     error: String?,
     onZoneSelected: (Zone) -> Unit,
     onShelfSelected: (Shelf) -> Unit,
+    onClearCascading: () -> Unit,
     onDismiss: () -> Unit,
     onCreateZone: (name: String, description: String?) -> Unit,
     onCreateShelf: (zoneId: Int, name: String, description: String?) -> Unit,
@@ -177,6 +179,10 @@ fun CreateWarehouseItemSheet(
                             description = ""
                             boxCode = ""
                             selectedPart = null
+                            selectedZone = null
+                            selectedShelf = null
+                            selectedRow = null
+                            onClearCascading()
                         },
                         label = {
                             Text(

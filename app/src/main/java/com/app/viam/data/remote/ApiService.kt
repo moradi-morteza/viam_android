@@ -97,17 +97,35 @@ interface ApiService {
     @POST("zones")
     suspend fun createZone(@Body request: ZoneRequest): Response<Zone>
 
+    @PUT("zones/{id}")
+    suspend fun updateZone(@Path("id") id: Int, @Body request: ZoneRequest): Response<Zone>
+
+    @DELETE("zones/{id}")
+    suspend fun deleteZone(@Path("id") id: Int): Response<Map<String, String>>
+
     @GET("shelves")
     suspend fun getShelves(@Query("zone_id") zoneId: Int? = null): Response<List<Shelf>>
 
     @POST("shelves")
     suspend fun createShelf(@Body request: ShelfRequest): Response<Shelf>
 
+    @PUT("shelves/{id}")
+    suspend fun updateShelf(@Path("id") id: Int, @Body request: ShelfRequest): Response<Shelf>
+
+    @DELETE("shelves/{id}")
+    suspend fun deleteShelf(@Path("id") id: Int): Response<Map<String, String>>
+
     @GET("rows")
     suspend fun getRows(@Query("shelf_id") shelfId: Int? = null): Response<List<Row>>
 
     @POST("rows")
     suspend fun createRow(@Body request: RowRequest): Response<Row>
+
+    @PUT("rows/{id}")
+    suspend fun updateRow(@Path("id") id: Int, @Body request: RowRequest): Response<Row>
+
+    @DELETE("rows/{id}")
+    suspend fun deleteRow(@Path("id") id: Int): Response<Map<String, String>>
 
     @POST("boxes")
     suspend fun createBox(@Body request: BoxRequest): Response<Box>

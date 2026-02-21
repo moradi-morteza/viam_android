@@ -42,6 +42,8 @@ import com.app.viam.ui.warehouse.BoxDetailScreen
 import com.app.viam.ui.warehouse.BoxDetailViewModel
 import com.app.viam.ui.warehouse.WarehouseListScreen
 import com.app.viam.ui.warehouse.WarehouseListViewModel
+import com.app.viam.ui.warehouse.WarehouseStructureScreen
+import com.app.viam.ui.warehouse.WarehouseStructureViewModel
 
 private enum class PersonnelSubScreenType { LIST, CREATE, EDIT }
 private enum class PartSubScreenType { LIST, CREATE, EDIT }
@@ -119,6 +121,8 @@ fun HomeScreen(
             currentUser?.hasPermission("manage-parts") == true
     val canViewWarehouse = currentUser?.isAdmin() == true ||
             currentUser?.hasPermission("view-warehouse") == true
+    val canManageStructure = currentUser?.isAdmin() == true ||
+            currentUser?.hasPermission("manage-warehouse-structure") == true
 
     // Sub-form screens (have their own TopAppBar with back)
     val isInPersonnelForm = currentScreen == DrawerScreen.PERSONNEL &&
@@ -178,6 +182,7 @@ fun HomeScreen(
         currentScreen == DrawerScreen.PERSONNEL -> stringResource(R.string.personnel_title)
         currentScreen == DrawerScreen.PARTS -> stringResource(R.string.parts_title)
         currentScreen == DrawerScreen.WAREHOUSE -> stringResource(R.string.warehouse_title)
+        currentScreen == DrawerScreen.WAREHOUSE_STRUCTURE -> stringResource(R.string.nav_warehouse_structure)
         else -> stringResource(R.string.app_name)
     }
 
@@ -195,6 +200,7 @@ fun HomeScreen(
         showPersonnel = canViewPersonnel,
         showParts = canViewParts,
         showWarehouse = canViewWarehouse,
+        showWarehouseStructure = canManageStructure,
         actions = {
             if (currentScreen == DrawerScreen.WAREHOUSE && warehouseVm != null) {
                 IconButton(onClick = warehouseVm::onCreateClicked) {
@@ -260,6 +266,17 @@ fun HomeScreen(
                     )
                 }
             }
+            DrawerScreen.WAREHOUSE_STRUCTURE -> {
+                val repo = WarehouseRepository()
+                val structureVm: WarehouseStructureViewModel = viewModel(
+                    factory = WarehouseStructureViewModel.Factory(repo)
+                )
+                WarehouseStructureScreen(
+                    viewModel = structureVm,
+                    canManage = canManageStructure,
+                    modifier = contentModifier
+                )
+            }
             DrawerScreen.DEVELOPER -> {
                 if (BuildConfig.DEBUG) {
                     val devVm: DeveloperViewModel = viewModel(
@@ -271,4 +288,3 @@ fun HomeScreen(
         }
     }
 }
-

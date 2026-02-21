@@ -70,6 +70,30 @@ class WarehouseRepository {
         } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
     }
 
+    suspend fun updateZone(id: Int, request: ZoneRequest): AuthResult<Zone> {
+        return try {
+            val response = api.updateZone(id, request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در ویرایش ناحیه")
+                else -> AuthResult.Error("خطا در ویرایش ناحیه")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun deleteZone(id: Int): AuthResult<Unit> {
+        return try {
+            val response = api.deleteZone(id)
+            when {
+                response.isSuccessful -> AuthResult.Success(Unit)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در حذف ناحیه")
+                else -> AuthResult.Error("خطا در حذف ناحیه")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
     suspend fun createZone(request: ZoneRequest): AuthResult<Zone> {
         return try {
             val response = api.createZone(request)
@@ -91,6 +115,30 @@ class WarehouseRepository {
         } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
     }
 
+    suspend fun updateShelf(id: Int, request: ShelfRequest): AuthResult<Shelf> {
+        return try {
+            val response = api.updateShelf(id, request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در ویرایش قفسه")
+                else -> AuthResult.Error("خطا در ویرایش قفسه")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun deleteShelf(id: Int): AuthResult<Unit> {
+        return try {
+            val response = api.deleteShelf(id)
+            when {
+                response.isSuccessful -> AuthResult.Success(Unit)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در حذف قفسه")
+                else -> AuthResult.Error("خطا در حذف قفسه")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
     suspend fun createShelf(request: ShelfRequest): AuthResult<Shelf> {
         return try {
             val response = api.createShelf(request)
@@ -108,6 +156,30 @@ class WarehouseRepository {
             val response = api.getRows(shelfId)
             if (response.isSuccessful) AuthResult.Success(response.body()!!)
             else AuthResult.Error("خطا در دریافت ردیف‌ها")
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun updateRow(id: Int, request: RowRequest): AuthResult<Row> {
+        return try {
+            val response = api.updateRow(id, request)
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در ویرایش ردیف")
+                else -> AuthResult.Error("خطا در ویرایش ردیف")
+            }
+        } catch (e: IOException) { AuthResult.NetworkError
+        } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
+    }
+
+    suspend fun deleteRow(id: Int): AuthResult<Unit> {
+        return try {
+            val response = api.deleteRow(id)
+            when {
+                response.isSuccessful -> AuthResult.Success(Unit)
+                response.code() == 422 -> AuthResult.Error(parseErrorMessage(response.errorBody()?.string()) ?: "خطا در حذف ردیف")
+                else -> AuthResult.Error("خطا در حذف ردیف")
+            }
         } catch (e: IOException) { AuthResult.NetworkError
         } catch (e: Exception) { AuthResult.Error("خطای غیرمنتظره رخ داد") }
     }

@@ -214,12 +214,23 @@ class WarehouseListViewModel(
 
     // Create sheet
     fun onCreateClicked() {
-        _uiState.update { it.copy(showCreateSheet = true, createError = null) }
-        if (_uiState.value.allZones.isEmpty()) loadZones()
+        _uiState.update {
+            it.copy(
+                showCreateSheet = true,
+                createError = null,
+                // Clear stale cascading data so user must re-select after reopening
+                shelvesForSelectedZone = emptyList(),
+                rowsForSelectedShelf = emptyList()
+            )
+        }
+        loadZones() // always reload — backend cache is cleared after every CRUD
     }
 
     fun onCreateSheetDismissed() =
         _uiState.update { it.copy(showCreateSheet = false, createError = null) }
+
+    fun onCreateTypeSwitched() =
+        _uiState.update { it.copy(shelvesForSelectedZone = emptyList(), rowsForSelectedShelf = emptyList()) }
 
     fun onCreateZoneSelected(zone: Zone) {
         _uiState.update { it.copy(shelvesForSelectedZone = emptyList(), rowsForSelectedShelf = emptyList()) }
@@ -293,11 +304,20 @@ class WarehouseListViewModel(
 
     private fun onCreateSuccess() {
         _uiState.update {
-            it.copy(isCreating = false, showCreateSheet = false, createError = null, createSuccess = true)
+            it.copy(
+                isCreating = false,
+                showCreateSheet = false,
+                createError = null,
+                createSuccess = true,
+                // clear cascading dropdowns so next open starts fresh
+                shelvesForSelectedZone = emptyList(),
+                rowsForSelectedShelf = emptyList()
+            )
         }
         loadBoxes(page = 1, mode = LoadMode.REFRESH)
-        // Reload tree so filter sheet reflects new items
+        // Reload tree + zones so filter sheet and next create sheet reflect new items
         loadTree()
+        loadZones()
     }
 
     fun onCreateSuccessConsumed() = _uiState.update { it.copy(createSuccess = false) }

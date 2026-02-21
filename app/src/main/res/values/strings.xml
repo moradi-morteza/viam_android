@@ -165,6 +165,26 @@
     <string name="dashboard_welcome_sub">سیستم مدیریت انبار ویام</string>
     <string name="dashboard_loading">در حال بارگذاری آمار…</string>
 
+    <!-- Warehouse Structure (Zone/Shelf/Row management) -->
+    <string name="nav_warehouse_structure">ساختار انبار</string>
+    <string name="structure_empty">هیچ ناحیه‌ای تعریف نشده</string>
+    <string name="structure_no_shelves">قفسه‌ای وجود ندارد</string>
+    <string name="structure_no_rows">ردیفی وجود ندارد</string>
+    <string name="structure_add_zone">افزودن ناحیه</string>
+    <string name="structure_edit_zone">ویرایش ناحیه</string>
+    <string name="structure_add_shelf">افزودن قفسه</string>
+    <string name="structure_edit_shelf">ویرایش قفسه</string>
+    <string name="structure_add_row">افزودن ردیف</string>
+    <string name="structure_edit_row">ویرایش ردیف</string>
+    <string name="structure_delete_zone_title">حذف ناحیه</string>
+    <string name="structure_delete_zone_msg">آیا مطمئنید که می‌خواهید ناحیه «%s» را حذف کنید؟</string>
+    <string name="structure_delete_shelf_title">حذف قفسه</string>
+    <string name="structure_delete_shelf_msg">آیا مطمئنید که می‌خواهید قفسه «%s» را حذف کنید؟</string>
+    <string name="structure_delete_row_title">حذف ردیف</string>
+    <string name="structure_delete_row_msg">آیا مطمئنید که می‌خواهید ردیف «%s» را حذف کنید؟</string>
+    <string name="edit">ویرایش</string>
+    <string name="delete">حذف</string>
+
     <!-- Date/Time Picker -->
     <string name="hour">ساعت</string>
     <string name="minute">دقیقه</string>

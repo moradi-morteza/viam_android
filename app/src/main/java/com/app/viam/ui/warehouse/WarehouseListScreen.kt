@@ -119,6 +119,7 @@ fun WarehouseListScreen(
             error = uiState.createError,
             onZoneSelected = viewModel::onCreateZoneSelected,
             onShelfSelected = viewModel::onCreateShelfSelected,
+            onClearCascading = viewModel::onCreateTypeSwitched,
             onDismiss = viewModel::onCreateSheetDismissed,
             onCreateZone = viewModel::createZone,
             onCreateShelf = viewModel::createShelf,
