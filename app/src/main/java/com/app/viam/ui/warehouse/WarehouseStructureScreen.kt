@@ -38,13 +38,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -112,9 +110,9 @@ fun WarehouseStructureScreen(
                     preselectedZone = when (dialog) {
                         is StructureDialog.AddShelf -> dialog.zone
                         is StructureDialog.EditShelf -> dialog.shelf.zone
+                            ?: uiState.zones.find { it.id == dialog.shelf.zoneId }
                         else -> null
                     },
-                    zones = uiState.zones,
                     isSaving = uiState.isSaving,
                     error = uiState.dialogError,
                     onDismiss = viewModel::closeDialog,
@@ -129,23 +127,30 @@ fun WarehouseStructureScreen(
                     onDismiss = viewModel::closeDialog,
                     onConfirm = { viewModel.deleteShelf(dialog.shelf) }
                 )
-            is StructureDialog.AddRow, is StructureDialog.EditRow ->
+            is StructureDialog.AddRow, is StructureDialog.EditRow -> {
+                // Resolve shelf with its parent zone, falling back to uiState.zones tree
+                val resolvedShelf = when (dialog) {
+                    is StructureDialog.AddRow -> dialog.shelf.let { shelf ->
+                        if (shelf.zone != null) shelf
+                        else shelf.copy(zone = uiState.zones.find { it.id == shelf.zoneId })
+                    }
+                    is StructureDialog.EditRow -> dialog.row.shelf?.let { shelf ->
+                        if (shelf.zone != null) shelf
+                        else shelf.copy(zone = uiState.zones.find { it.id == shelf.zoneId })
+                    } ?: uiState.zones.flatMap { it.shelves.orEmpty() }
+                        .find { it.id == dialog.row.shelfId }
+                        ?.let { shelf -> shelf.copy(zone = uiState.zones.find { it.id == shelf.zoneId }) }
+                    else -> null
+                }
                 RowDialog(
                     initial = (dialog as? StructureDialog.EditRow)?.row,
-                    preselectedShelf = when (dialog) {
-                        is StructureDialog.AddRow -> dialog.shelf
-                        is StructureDialog.EditRow -> dialog.row.shelf
-                        else -> null
-                    },
-                    zones = uiState.zones,
-                    shelvesForPicker = uiState.shelvesForPicker,
-                    isLoadingShelves = uiState.isLoadingShelvesForPicker,
+                    preselectedShelf = resolvedShelf,
                     isSaving = uiState.isSaving,
                     error = uiState.dialogError,
-                    onZoneSelected = { viewModel.loadShelvesForZone(it) },
                     onDismiss = viewModel::closeDialog,
                     onSave = { shelfId, name, desc -> viewModel.saveRow(shelfId, name, desc) }
                 )
+            }
             is StructureDialog.DeleteRow ->
                 DeleteDialog(
                     title = stringResource(R.string.structure_delete_row_title),
@@ -160,6 +165,7 @@ fun WarehouseStructureScreen(
 
     Scaffold(
         modifier = modifier,
+        floatingActionButtonPosition = FabPosition.Start,
         floatingActionButton = {
             if (canCreateZones) {
                 FloatingActionButton(onClick = { viewModel.openDialog(StructureDialog.AddZone) }) {
@@ -637,6 +643,31 @@ private fun OverflowMenu(
     }
 }
 
+// ── Context label (read-only, shown instead of a dropdown when value is pre-known) ──
+
+@Composable
+private fun ContextLabel(label: String, value: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(2.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small,
+            color = MaterialTheme.colorScheme.surfaceVariant
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+            )
+        }
+    }
+}
+
 // ── Dialogs ────────────────────────────────────────────────────────────────────
 
 @Composable
@@ -702,7 +733,6 @@ private fun ZoneDialog(
 private fun ShelfDialog(
     initial: Shelf?,
     preselectedZone: Zone?,
-    zones: List<Zone>,
     isSaving: Boolean,
     error: String?,
     onDismiss: () -> Unit,
@@ -710,8 +740,8 @@ private fun ShelfDialog(
 ) {
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var description by remember { mutableStateOf(initial?.description ?: "") }
-    var selectedZone by remember { mutableStateOf(preselectedZone ?: zones.firstOrNull()) }
-    var zoneExpanded by remember { mutableStateOf(false) }
+    // Zone is always fixed — either from context (add) or from the shelf being edited
+    val fixedZone = preselectedZone ?: initial?.zone
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -727,23 +757,11 @@ private fun ShelfDialog(
                     Text(error, color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall)
                 }
-                ExposedDropdownMenuBox(expanded = zoneExpanded, onExpandedChange = { zoneExpanded = it }) {
-                    OutlinedTextField(
-                        value = selectedZone?.name ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.warehouse_zone)) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = zoneExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                if (fixedZone != null) {
+                    ContextLabel(
+                        label = stringResource(R.string.warehouse_zone),
+                        value = fixedZone.name
                     )
-                    ExposedDropdownMenu(expanded = zoneExpanded, onDismissRequest = { zoneExpanded = false }) {
-                        zones.forEach { zone ->
-                            DropdownMenuItem(
-                                text = { Text(zone.name) },
-                                onClick = { selectedZone = zone; zoneExpanded = false }
-                            )
-                        }
-                    }
                 }
                 OutlinedTextField(
                     value = name, onValueChange = { name = it },
@@ -760,8 +778,8 @@ private fun ShelfDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { selectedZone?.let { onSave(it.id, name, description.ifBlank { null }) } },
-                enabled = name.isNotBlank() && selectedZone != null && !isSaving
+                onClick = { fixedZone?.let { onSave(it.id, name, description.ifBlank { null }) } },
+                enabled = name.isNotBlank() && fixedZone != null && !isSaving
             ) {
                 Text(if (isSaving) stringResource(R.string.loading) else stringResource(R.string.save))
             }
@@ -777,26 +795,15 @@ private fun ShelfDialog(
 private fun RowDialog(
     initial: Row?,
     preselectedShelf: Shelf?,
-    zones: List<Zone>,
-    shelvesForPicker: List<Shelf>,
-    isLoadingShelves: Boolean,
     isSaving: Boolean,
     error: String?,
-    onZoneSelected: (Int) -> Unit,
     onDismiss: () -> Unit,
     onSave: (shelfId: Int, name: String, description: String?) -> Unit
 ) {
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var description by remember { mutableStateOf(initial?.description ?: "") }
-    val initialZone = preselectedShelf?.zone
-    var selectedZone by remember { mutableStateOf(initialZone) }
-    var selectedShelf by remember { mutableStateOf(preselectedShelf) }
-    var zoneExpanded by remember { mutableStateOf(false) }
-    var shelfExpanded by remember { mutableStateOf(false) }
-
-    androidx.compose.runtime.LaunchedEffect(selectedZone?.id) {
-        selectedZone?.let { onZoneSelected(it.id) }
-    }
+    // Shelf (and its zone) are always fixed — either from add context or from the row being edited
+    val fixedShelf = preselectedShelf
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -812,48 +819,15 @@ private fun RowDialog(
                     Text(error, color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall)
                 }
-                ExposedDropdownMenuBox(expanded = zoneExpanded, onExpandedChange = { zoneExpanded = it }) {
-                    OutlinedTextField(
-                        value = selectedZone?.name ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.warehouse_zone)) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = zoneExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                if (fixedShelf != null) {
+                    ContextLabel(
+                        label = stringResource(R.string.warehouse_zone),
+                        value = fixedShelf.zone?.name ?: ""
                     )
-                    ExposedDropdownMenu(expanded = zoneExpanded, onDismissRequest = { zoneExpanded = false }) {
-                        zones.forEach { zone ->
-                            DropdownMenuItem(
-                                text = { Text(zone.name) },
-                                onClick = {
-                                    selectedZone = zone
-                                    selectedShelf = null
-                                    zoneExpanded = false
-                                    onZoneSelected(zone.id)
-                                }
-                            )
-                        }
-                    }
-                }
-                ExposedDropdownMenuBox(expanded = shelfExpanded, onExpandedChange = { shelfExpanded = it }) {
-                    OutlinedTextField(
-                        value = if (isLoadingShelves) stringResource(R.string.loading)
-                                else selectedShelf?.name ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.warehouse_shelf)) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = shelfExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                        enabled = selectedZone != null && !isLoadingShelves
+                    ContextLabel(
+                        label = stringResource(R.string.warehouse_shelf),
+                        value = fixedShelf.name
                     )
-                    ExposedDropdownMenu(expanded = shelfExpanded, onDismissRequest = { shelfExpanded = false }) {
-                        shelvesForPicker.forEach { shelf ->
-                            DropdownMenuItem(
-                                text = { Text(shelf.name) },
-                                onClick = { selectedShelf = shelf; shelfExpanded = false }
-                            )
-                        }
-                    }
                 }
                 OutlinedTextField(
                     value = name, onValueChange = { name = it },
@@ -870,8 +844,8 @@ private fun RowDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { selectedShelf?.let { onSave(it.id, name, description.ifBlank { null }) } },
-                enabled = name.isNotBlank() && selectedShelf != null && !isSaving
+                onClick = { fixedShelf?.let { onSave(it.id, name, description.ifBlank { null }) } },
+                enabled = name.isNotBlank() && fixedShelf != null && !isSaving
             ) {
                 Text(if (isSaving) stringResource(R.string.loading) else stringResource(R.string.save))
             }
