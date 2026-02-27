@@ -96,6 +96,8 @@
     <string name="part_category_name">نام دسته‌بندی</string>
     <string name="part_category_description">توضیحات</string>
     <string name="part_category_parts_count">قطعه</string>
+    <string name="part_category_parent">دسته‌بندی والد</string>
+    <string name="part_category_no_parent">بدون والد (ریشه)</string>
     <string name="refresh">بارگذاری مجدد</string>
 
     <!-- Warehouse Screen -->

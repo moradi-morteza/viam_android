@@ -6,12 +6,15 @@ data class PartCategory(
     val id: Int,
     val name: String,
     val description: String?,
-    @SerializedName("parts_count") val partsCount: Int = 0
+    @SerializedName("parts_count") val partsCount: Int = 0,
+    @SerializedName("parent_id") val parentId: Int? = null,
+    val parent: PartCategory? = null
 )
 
 data class PartCategoryRequest(
     val name: String,
-    val description: String?
+    val description: String?,
+    @SerializedName("parent_id") val parentId: Int? = null
 )
 
 data class Part(

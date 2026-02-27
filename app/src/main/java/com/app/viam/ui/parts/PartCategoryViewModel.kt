@@ -14,18 +14,31 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** A PartCategory entry enriched with its full ancestor path for display in the dropdown */
+data class PartCategoryTreeItem(
+    val id: Int,
+    val name: String,
+    val fullPath: String   // e.g. "الکترونیک / برد مدار / مقاومت"
+)
+
 data class PartCategoryUiState(
     val categories: List<PartCategory> = emptyList(),
+    // id → full ancestor path, e.g. "الکترونیک / برد مدار / مقاومت"
+    val fullPathMap: Map<Int, String> = emptyMap(),
     val isLoading: Boolean = false,
     val error: String? = null,
     // inline form (edit or create)
     val showForm: Boolean = false,
-    val editingCategory: PartCategory? = null,  // null = create mode
+    val editingCategory: PartCategory? = null,
     val formName: String = "",
     val formDescription: String = "",
+    val formParentId: Int? = null,
     val formNameError: String? = null,
     val isFormSaving: Boolean = false,
     val formError: String? = null,
+    // available parents for the dropdown (tree-ordered, excludes self+descendants when editing)
+    val parentOptions: List<PartCategoryTreeItem> = emptyList(),
+    val isParentOptionsLoading: Boolean = false,
     // delete
     val deleteConfirmId: Int? = null,
     val isDeleting: Boolean = false
@@ -39,6 +52,9 @@ class PartCategoryViewModel(
     private val _uiState = MutableStateFlow(PartCategoryUiState())
     val uiState: StateFlow<PartCategoryUiState> = _uiState.asStateFlow()
 
+    // Cached flat list of all categories (for building the parent tree)
+    private var allCategories: List<PartCategory> = emptyList()
+
     val canCreate: Boolean get() = currentUser.isAdmin() || currentUser.hasPermission("create-part-categories")
     val canEdit: Boolean get() = currentUser.isAdmin() || currentUser.hasPermission("edit-part-categories")
     val canDelete: Boolean get() = currentUser.isAdmin() || currentUser.hasPermission("delete-part-categories")
@@ -49,8 +65,15 @@ class PartCategoryViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             when (val result = repository.getPartCategories()) {
-                is AuthResult.Success -> _uiState.update {
-                    it.copy(isLoading = false, categories = result.data)
+                is AuthResult.Success -> {
+                    allCategories = result.data
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            categories = result.data,
+                            fullPathMap = buildFullPathMap(result.data)
+                        )
+                    }
                 }
                 is AuthResult.Error -> _uiState.update {
                     it.copy(isLoading = false, error = result.message)
@@ -62,24 +85,114 @@ class PartCategoryViewModel(
         }
     }
 
+    // ── Path helpers ─────────────────────────────────────────────────────────
+
+    /**
+     * Build a map of id → full ancestor path string ("A / B / C") for every
+     * category in the flat list, walking parentId links up to any depth.
+     */
+    private fun buildFullPathMap(items: List<PartCategory>): Map<Int, String> {
+        val byId = items.associateBy { it.id }
+
+        fun pathFor(cat: PartCategory): String {
+            val parts = mutableListOf<String>()
+            var current: PartCategory? = cat
+            while (current != null) {
+                parts.add(0, current.name)
+                current = current.parentId?.let { byId[it] }
+            }
+            return parts.joinToString(" / ")
+        }
+
+        return items.associate { it.id to pathFor(it) }
+    }
+
+    // ── Tree helpers ──────────────────────────────────────────────────────────
+
+    /** Depth-first ordered flat list with full-path strings, excluding excludedIds */
+    private fun buildTreeList(
+        items: List<PartCategory>,
+        excludedIds: Set<Int>,
+        pathMap: Map<Int, String>,
+        parentId: Int? = null
+    ): List<PartCategoryTreeItem> {
+        val result = mutableListOf<PartCategoryTreeItem>()
+        val children = items
+            .filter { (it.parentId ?: -1).let { pid -> if (parentId == null) pid == -1 else pid == parentId } &&
+                !excludedIds.contains(it.id) }
+            .sortedWith(compareBy { it.name })
+        for (child in children) {
+            result.add(PartCategoryTreeItem(
+                id = child.id,
+                name = child.name,
+                fullPath = pathMap[child.id] ?: child.name
+            ))
+            result.addAll(buildTreeList(items, excludedIds, pathMap, child.id))
+        }
+        return result
+    }
+
+    private fun getDescendantIds(categoryId: Int, items: List<PartCategory>): Set<Int> {
+        val ids = mutableSetOf<Int>()
+        val children = items.filter { it.parentId == categoryId }
+        for (child in children) {
+            ids.add(child.id)
+            ids.addAll(getDescendantIds(child.id, items))
+        }
+        return ids
+    }
+
+    private fun buildParentOptions(editingId: Int?): List<PartCategoryTreeItem> {
+        val excluded = if (editingId != null) {
+            setOf(editingId) + getDescendantIds(editingId, allCategories)
+        } else {
+            emptySet()
+        }
+        val pathMap = buildFullPathMap(allCategories)
+        return buildTreeList(allCategories, excluded, pathMap)
+    }
+
+    // ── Form actions ──────────────────────────────────────────────────────────
+
     fun onCreateClicked() {
         _uiState.update {
-            it.copy(showForm = true, editingCategory = null, formName = "", formDescription = "", formNameError = null, formError = null)
+            it.copy(
+                showForm = true,
+                editingCategory = null,
+                formName = "",
+                formDescription = "",
+                formParentId = null,
+                formNameError = null,
+                formError = null,
+                parentOptions = buildParentOptions(null)
+            )
         }
     }
 
     fun onEditClicked(category: PartCategory) {
         _uiState.update {
-            it.copy(showForm = true, editingCategory = category, formName = category.name, formDescription = category.description ?: "", formNameError = null, formError = null)
+            it.copy(
+                showForm = true,
+                editingCategory = category,
+                formName = category.name,
+                formDescription = category.description ?: "",
+                formParentId = category.parentId,
+                formNameError = null,
+                formError = null,
+                parentOptions = buildParentOptions(category.id)
+            )
         }
     }
 
     fun onFormDismiss() {
-        _uiState.update { it.copy(showForm = false, editingCategory = null, formNameError = null, formError = null) }
+        _uiState.update {
+            it.copy(showForm = false, editingCategory = null, formNameError = null, formError = null)
+        }
     }
 
     fun onFormNameChange(v: String) = _uiState.update { it.copy(formName = v, formNameError = null) }
     fun onFormDescriptionChange(v: String) = _uiState.update { it.copy(formDescription = v) }
+    fun onFormParentSelected(id: Int?) = _uiState.update { it.copy(formParentId = id) }
 
     fun onFormSave() {
         val state = _uiState.value
@@ -89,7 +202,8 @@ class PartCategoryViewModel(
         }
         val request = PartCategoryRequest(
             name = state.formName.trim(),
-            description = state.formDescription.ifBlank { null }
+            description = state.formDescription.ifBlank { null },
+            parentId = state.formParentId
         )
         viewModelScope.launch {
             _uiState.update { it.copy(isFormSaving = true, formError = null) }

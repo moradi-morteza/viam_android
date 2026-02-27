@@ -22,18 +22,21 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -101,11 +104,14 @@ fun PartCategoryScreen(
             isEdit = uiState.editingCategory != null,
             name = uiState.formName,
             description = uiState.formDescription,
+            parentId = uiState.formParentId,
+            parentOptions = uiState.parentOptions,
             nameError = uiState.formNameError,
             formError = uiState.formError,
             isSaving = uiState.isFormSaving,
             onNameChange = viewModel::onFormNameChange,
             onDescriptionChange = viewModel::onFormDescriptionChange,
+            onParentSelected = viewModel::onFormParentSelected,
             onDismiss = viewModel::onFormDismiss,
             onSave = viewModel::onFormSave
         )
@@ -156,6 +162,10 @@ fun PartCategoryScreen(
                         items(uiState.categories, key = { it.id }) { category ->
                             CategoryCard(
                                 category = category,
+                                // Full ancestor path excluding the category itself
+                                parentPath = if (category.parentId != null)
+                                    uiState.fullPathMap[category.parentId]
+                                else null,
                                 canEdit = viewModel.canEdit,
                                 canDelete = viewModel.canDelete,
                                 onEdit = { viewModel.onEditClicked(category) },
@@ -174,9 +184,14 @@ fun PartCategoryScreen(
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Category Card
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 private fun CategoryCard(
     category: PartCategory,
+    parentPath: String?,
     canEdit: Boolean,
     canDelete: Boolean,
     onEdit: () -> Unit,
@@ -215,6 +230,21 @@ private fun CategoryCard(
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium
                 )
+                // Show full ancestor path if this is a child category
+                if (parentPath != null) {
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Surface(
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = "↲ $parentPath",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
                 if (!category.description.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -247,7 +277,7 @@ private fun CategoryCard(
                     ) {
                         if (canEdit) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.parts_edit)) },
+                                text = { Text(stringResource(R.string.edit)) },
                                 leadingIcon = {
                                     Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                                 },
@@ -287,17 +317,24 @@ private fun CategoryCard(
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Category Form Bottom Sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CategoryFormSheet(
     isEdit: Boolean,
     name: String,
     description: String,
+    parentId: Int?,
+    parentOptions: List<PartCategoryTreeItem>,
     nameError: String?,
     formError: String?,
     isSaving: Boolean,
     onNameChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
+    onParentSelected: (Int?) -> Unit,
     onDismiss: () -> Unit,
     onSave: () -> Unit
 ) {
@@ -360,6 +397,16 @@ private fun CategoryFormSheet(
                 maxLines = 4,
                 modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Parent category dropdown
+            ParentCategoryDropdown(
+                options = parentOptions,
+                selectedId = parentId,
+                onSelect = onParentSelected,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Row(
@@ -394,6 +441,72 @@ private fun CategoryFormSheet(
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Parent Category Dropdown  (indented tree)
+// ─────────────────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ParentCategoryDropdown(
+    options: List<PartCategoryTreeItem>,
+    selectedId: Int?,
+    onSelect: (Int?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val selectedName = if (selectedId == null) {
+        stringResource(R.string.part_category_no_parent)
+    } else {
+        options.firstOrNull { it.id == selectedId }?.fullPath
+            ?: stringResource(R.string.part_category_no_parent)
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedName,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(R.string.part_category_parent)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            // "No parent" option
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        stringResource(R.string.part_category_no_parent),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                onClick = { onSelect(null); expanded = false }
+            )
+            // Tree-ordered options showing full ancestor path
+            options.forEach { item ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = item.fullPath,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    onClick = { onSelect(item.id); expanded = false }
+                )
+            }
         }
     }
 }
