@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.viam.R
 import com.app.viam.data.model.Box
+import com.app.viam.data.model.PartCategory
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -335,6 +336,17 @@ private fun ActiveFilterCard(
     }
 }
 
+/** Walk nested parent objects to build "A / B / C" path string */
+private fun categoryFullPath(category: PartCategory?): String {
+    val parts = mutableListOf<String>()
+    var current = category
+    while (current != null) {
+        parts.add(0, current.name)
+        current = current.parent
+    }
+    return parts.joinToString(" / ")
+}
+
 @Composable
 private fun BoxCard(
     box: Box,
@@ -383,6 +395,14 @@ private fun BoxCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    val catPath = categoryFullPath(box.part.category)
+                    if (catPath.isNotEmpty()) {
+                        Text(
+                            text = catPath,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                        )
+                    }
                 } else {
                     Text(
                         text = stringResource(R.string.warehouse_no_part),

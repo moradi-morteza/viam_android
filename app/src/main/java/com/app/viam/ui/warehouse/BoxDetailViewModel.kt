@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.app.viam.data.model.Box
+import com.app.viam.data.model.PartCategory
+import com.app.viam.data.model.PartRequest
 import com.app.viam.data.model.TransactionRequest
 import com.app.viam.data.repository.AuthResult
+import com.app.viam.data.repository.PartRepository
 import com.app.viam.data.repository.WarehouseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,11 +28,19 @@ data class BoxDetailUiState(
     // Delete
     val showDeleteConfirm: Boolean = false,
     val isDeleting: Boolean = false,
-    val deleted: Boolean = false
+    val deleted: Boolean = false,
+    // Edit part category sheet
+    val showEditCategorySheet: Boolean = false,
+    val categories: List<PartCategory> = emptyList(),
+    val isCategoriesLoading: Boolean = false,
+    val selectedCategoryId: Int? = null,
+    val isSavingCategory: Boolean = false,
+    val categoryError: String? = null
 )
 
 class BoxDetailViewModel(
     private val repository: WarehouseRepository,
+    private val partRepository: PartRepository,
     private val boxId: Int
 ) : ViewModel() {
 
@@ -108,12 +119,71 @@ class BoxDetailViewModel(
     fun onErrorDismissed() = _uiState.update { it.copy(error = null) }
     fun onTransactionSuccessConsumed() = _uiState.update { it.copy(transactionSuccess = false) }
 
+    // Edit part category
+    fun onEditCategoryClicked() {
+        val currentCategoryId = _uiState.value.box?.part?.category?.id
+        _uiState.update {
+            it.copy(
+                showEditCategorySheet = true,
+                selectedCategoryId = currentCategoryId,
+                categoryError = null
+            )
+        }
+        if (_uiState.value.categories.isEmpty()) loadCategories()
+    }
+
+    fun onEditCategoryDismissed() =
+        _uiState.update { it.copy(showEditCategorySheet = false, categoryError = null) }
+
+    fun onCategorySelected(id: Int?) =
+        _uiState.update { it.copy(selectedCategoryId = id) }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCategoriesLoading = true) }
+            when (val result = partRepository.getPartCategories()) {
+                is AuthResult.Success -> _uiState.update {
+                    it.copy(isCategoriesLoading = false, categories = result.data)
+                }
+                else -> _uiState.update { it.copy(isCategoriesLoading = false) }
+            }
+        }
+    }
+
+    fun onSaveCategoryClicked() {
+        val part = _uiState.value.box?.part ?: return
+        val state = _uiState.value
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSavingCategory = true, categoryError = null) }
+            val request = PartRequest(
+                sku = part.sku,
+                name = part.name,
+                description = part.description,
+                unit = part.unit,
+                partCategoryId = state.selectedCategoryId
+            )
+            when (val result = partRepository.updatePart(part.id, request)) {
+                is AuthResult.Success -> {
+                    _uiState.update { it.copy(isSavingCategory = false, showEditCategorySheet = false) }
+                    loadBox()
+                }
+                is AuthResult.Error -> _uiState.update {
+                    it.copy(isSavingCategory = false, categoryError = result.message)
+                }
+                is AuthResult.NetworkError -> _uiState.update {
+                    it.copy(isSavingCategory = false, categoryError = "اتصال به اینترنت برقرار نیست")
+                }
+            }
+        }
+    }
+
     class Factory(
         private val repository: WarehouseRepository,
+        private val partRepository: PartRepository,
         private val boxId: Int
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            BoxDetailViewModel(repository, boxId) as T
+            BoxDetailViewModel(repository, partRepository, boxId) as T
     }
 }

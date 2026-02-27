@@ -191,9 +191,10 @@ fun HomeScreen(
 
     if (isInBoxDetail && selectedBoxId != null) {
         val repo = WarehouseRepository()
+        val partRepo = PartRepository()
         val detailVm: BoxDetailViewModel = viewModel(
             key = "box_detail_$selectedBoxId",
-            factory = BoxDetailViewModel.Factory(repo, selectedBoxId!!)
+            factory = BoxDetailViewModel.Factory(repo, partRepo, selectedBoxId!!)
         )
         BoxDetailScreen(
             viewModel = detailVm,
