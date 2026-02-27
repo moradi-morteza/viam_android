@@ -2,6 +2,8 @@ package com.app.viam.data.repository
 
 import com.app.viam.data.model.ApiError
 import com.app.viam.data.model.CreateStaffRequest
+import com.app.viam.data.model.Permission
+import com.app.viam.data.model.Role
 import com.app.viam.data.model.UpdateStaffRequest
 import com.app.viam.data.model.User
 import com.app.viam.data.remote.NetworkModule
@@ -96,6 +98,36 @@ class PersonnelRepository {
                 response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
                 response.code() == 404 -> AuthResult.Error("کاربر یافت نشد")
                 else -> AuthResult.Error("خطا در حذف کاربر")
+            }
+        } catch (e: IOException) {
+            AuthResult.NetworkError
+        } catch (e: Exception) {
+            AuthResult.Error("خطای غیرمنتظره رخ داد")
+        }
+    }
+
+    suspend fun getRoles(): AuthResult<List<Role>> {
+        return try {
+            val response = api.getRoles()
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
+                else -> AuthResult.Error("خطا در دریافت نقش‌ها")
+            }
+        } catch (e: IOException) {
+            AuthResult.NetworkError
+        } catch (e: Exception) {
+            AuthResult.Error("خطای غیرمنتظره رخ داد")
+        }
+    }
+
+    suspend fun getPermissionsGrouped(): AuthResult<Map<String, List<Permission>>> {
+        return try {
+            val response = api.getPermissionsGrouped()
+            when {
+                response.isSuccessful -> AuthResult.Success(response.body()!!)
+                response.code() == 403 -> AuthResult.Error("دسترسی کافی ندارید")
+                else -> AuthResult.Error("خطا در دریافت دسترسی‌ها")
             }
         } catch (e: IOException) {
             AuthResult.NetworkError

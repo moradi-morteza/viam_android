@@ -3,6 +3,7 @@ package com.app.viam.data.remote
 import com.app.viam.data.model.Box
 import com.app.viam.data.model.BoxTransaction
 import com.app.viam.data.model.CreateStaffRequest
+import com.app.viam.data.model.Role
 import com.app.viam.data.model.LoginRequest
 import com.app.viam.data.model.LoginResponse
 import com.app.viam.data.model.PaginatedBoxes
@@ -15,6 +16,7 @@ import com.app.viam.data.model.UpdateStaffRequest
 import com.app.viam.data.model.User
 import com.app.viam.data.model.BoxRequest
 import com.app.viam.data.model.DashboardStats
+import com.app.viam.data.model.Permission
 import com.app.viam.data.model.Row
 import com.app.viam.data.model.RowRequest
 import com.app.viam.data.model.Shelf
@@ -66,6 +68,12 @@ interface ApiService {
 
     @DELETE("staffs/{id}")
     suspend fun deleteStaff(@Path("id") id: Int): Response<Map<String, String>>
+
+    @GET("roles")
+    suspend fun getRoles(): Response<List<Role>>
+
+    @GET("permissions")
+    suspend fun getPermissionsGrouped(): Response<Map<String, List<Permission>>>
 
     // --- Parts ---
 

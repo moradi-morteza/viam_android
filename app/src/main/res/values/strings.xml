@@ -61,6 +61,12 @@
     <string name="personnel_delete_message">آیا مطمئن هستید که می‌خواهید این کاربر را حذف کنید؟</string>
     <string name="personnel_empty">هیچ کاربری یافت نشد</string>
     <string name="personnel_password_optional">رمز عبور (اختیاری)</string>
+    <string name="personnel_role">نقش</string>
+    <string name="personnel_no_role">بدون نقش</string>
+    <string name="personnel_permissions">دسترسی‌ها</string>
+    <string name="personnel_from_role">از نقش</string>
+    <string name="personnel_direct_permission">مستقیم</string>
+    <string name="personnel_role_default">پیش‌فرض نقش</string>
 
     <!-- Parts Screen -->
     <string name="parts_title">قطعات</string>
